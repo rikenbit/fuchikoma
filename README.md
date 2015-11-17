@@ -8,11 +8,28 @@ FUCHIKOMA（ふちこま、天乃斑駒が由来）は、BAHSICとDiffusion Map�
 4. あらかじめクラス数の判定をする必要がない（教師無し）
 5. ***による並列化
 6. single-cell RNA-Seqに固有な***の補正
-7. ***による$p$-value、その後のFDR補正の対応
+7. ***によるp-value、その後のFDR補正の対応
 
 # 使い方
 ```r
-input <- read.table("input.txt")
-result <- FUCHIKOMA(input)
+# destinyを読み込む
+library(destiny)
+
+# データ読み込み
+data("testdata")
+
+# オブジェクト化
+testdata.obj <- as.ExpressionSet(testdata)
+
+# Diffusion Mapを実行
+dif <- DiffusionMap(testdata.obj)
+
+# FUCHIKOMA実行
+result <- FKM(dif)
+
+# 結果の出力
 summary(result)
+
+# プロット
+plot(result)
 ```
