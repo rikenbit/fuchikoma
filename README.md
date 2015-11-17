@@ -1,5 +1,5 @@
 # FUCHIKOMA
-FUCHIKOMA（ふちこま、天斑駒が由来）は、BAHSICとDiffusion Mapを利用した、非線形なPCAにおける主成分に寄与した遺伝子を特定する手法です。
+FUCHIKOMA（ふちこま、天乃斑駒が由来）は、BAHSICとDiffusion Mapを利用した、非線形なPCAにおける主成分に寄与した遺伝子を特定する手法です。
 
 # 特徴・メリット
 1. Diffusion Mapを利用した非線形なPCA
