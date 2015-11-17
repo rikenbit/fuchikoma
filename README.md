@@ -17,19 +17,21 @@ library(destiny)
 
 # データ読み込み
 data("testdata")
+data("cellcycle")
 
 # オブジェクト化
 testdata.obj <- as.ExpressionSet(testdata)
 
-# Diffusion Mapを実行
-dif <- DiffusionMap(testdata.obj)
+# Diffusion Mapを実行（第10主成分までを見る）
+dif <- DiffusionMap(testdata.obj, n.eigs=10)
+
+# 目視でどの主成分に分かれるのかを確認
+pairs(eigenvectors(dif), col=cellcycle)
 
 # FUCHIKOMA実行
-result <- FKM(dif)
+result <- FKM(dif, DC=c(1,2))
 
-# 結果の出力
-summary(result)
+# DEGs
+head(result)
 
-# プロット
-plot(result)
 ```
