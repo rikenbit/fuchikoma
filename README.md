@@ -7,10 +7,10 @@ BAHSICとDiffusion Mapを利用した、非線形なPCAにおける主成分に�
 3. 複数の主成分が組み合わさった方向に寄与する遺伝子も選択できる
 4. あらかじめクラス数の判定をする必要がない（教師無し）
 5. ***による並列化
-6. ...
+6. single-cell RNA-Seqに固有な***の補正
+7. ***による$p$-value、その後のFDR補正の対応
 
 # 使い方
-Rを起動後、
 ```r
 input <- read.table("input.txt")
 result <- FUCHIKOMA(input)
