@@ -1,0 +1,2 @@
+# FUCHIKOMA
+BAHSICとDiffusion Mapを利用した、非線形なPCAにおける主成分に寄与した遺伝子を特定する手法
