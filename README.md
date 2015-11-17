@@ -8,3 +8,11 @@ BAHSICとDiffusion Mapを利用した、非線形なPCAにおける主成分に�
 4. あらかじめクラス数の判定をする必要がない（教師無し）
 5. ***による並列化
 6. ...
+
+# 使い方
+Rを起動後、
+```r
+input <- read.table("input.txt")
+result <- FUCHIKOMA(input)
+summary(result)
+```
