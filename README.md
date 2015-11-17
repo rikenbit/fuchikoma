@@ -15,8 +15,10 @@ FUCHIKOMA（ふちこま、天乃斑駒が由来）は、BAHSICとDiffusion Map�
 # destinyを読み込む
 library(destiny)
 
-# データ読み込み
+# 遺伝子発現量データ読み込み
 data("testdata")
+
+# 細胞周期ラベル読み込み
 data("cellcycle")
 
 # オブジェクト化
