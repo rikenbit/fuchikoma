@@ -34,4 +34,6 @@ result <- FKM(dif, DC=c(1,2))
 # DEGs
 head(result)
 
+# データ保存
+write.table(result)
 ```
