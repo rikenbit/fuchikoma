@@ -202,39 +202,63 @@ HSIC <- function(K, L, N){
 
 # HSICを利用した特徴量抽出
 FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10){
+
+    ############ ラベル側のグラム行列（一回のみ） ##############
+    if((mode == "Supervised") && (is.vector(label))){
+        if(!type){
+            L <- CatKernel(label, type=type)
+        }else{
+            warning("type is two, one_vs_rest, or each!")
+        }
+    }else if(mode == "Unsupervised"){
+        if(is.matrix(Comp)){
+            EigenVecs <- custom.DiffusionMap(as.ExpressionSet(data), n.eigs=n.eigs)$eigenvectors[, Comp]
+            L <- t(EigenVecs) %*% EigenVecs
+        }else{
+            warning("Specify Comp!")
+        }
+    }else{
+        warning("Wong mode!")
+    }
+    ######################################################
+
+    ######################## BAHSIC ######################
     # データ数
     N <- ncol(data)
     # HSIC値の格納先
     HSICs <- c()
-    # 削除した遺伝子
-    Rejected <- c()
+    # 削除した遺伝子の場所
+    RejPosition <- c()
 
-    # 毎回1個の遺伝子を削除
     for(i in 1:nrow(data)){
         print(i)
+        #️ このステップで見る遺伝子（生き残り）
+        SurvPosition <- setdiff(1:nrow(data), RejPosition)
         # このステップでの仮のHSICs
-        tmp_HSICs <- c()
-        #️ このステップで見る遺伝子
-        *** <-
-        # データ側のグラム行列
-        dif <- custom.DiffusionMap(as.ExpressionSet(data[***,]), n.eigs=n.eigs)
-
-
-
-        # HSICを計算
-        tmp_HSICs <- c(tmp_HSICs, HSIC(dif$M, L, N))
+        tmp_HSICs <- rep(0, length=length(SurvPosition))
+        # 生き残ってる遺伝子の名前
+        names(tmp_HSICs) <- rownames(data)[SurvPosition]
+        for(j in 1:length(SurvPosition)){
+            # データ側のグラム行列
+            dif <- custom.DiffusionMap(as.ExpressionSet(data[SurvPosition,]), n.eigs=n.eigs)
+            K <- dif$M
+            # HSICを計算
+            tmp_HSICs <- c(tmp_HSICs, HSIC(K, L, N))
+        }
+        ############### 各ステップでの最後の処理 #############
+        # 今回一番HSICが大きくなった遺伝子
+        MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))
+        # BAHSICの最大値を格納
+        HSICs <- c(HSICs, tmp_HSIC[MaxHSIC])
+        # 削除した遺伝子を登録
+        RejPosition <- c(RejPosition, which(names(tmp_HSIC[MaxHSIC]) == colnames(data)))
+        ##################################################
     }
-
-    # BAHSICの最大値を格納
-    HSICs <- c(HSICs, ???)
-    # 削除した遺伝子を登録
-    Rejected <- c(Rejected, ???)
+    ######################################################
 
     # 結果を出力
     list(
-        DEGs = DEGs,
-        Pval = Pval,
-        Qval = Qval,
+        DEGs = rownames(data)[setdiff(1:nrow(data), RejPosition)],
         BAHSICs = BAHSICs
     )
 }
