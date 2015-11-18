@@ -226,7 +226,7 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     # 削除した遺伝子の場所
     RejPosition <- c()
 
-    for(i in 1:(nrow(data)-1)){
+    for(i in 1:nrow(data)){
         print(i)
         #️ このステップで見る遺伝子（生き残り）
         SurvPosition <- setdiff(1:nrow(data), RejPosition)
@@ -241,20 +241,29 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
             # HSICを計算
             tmp_HSICs[j] <- HSIC(K, L, N)
         }
-        ############### 各ステップでの最後の処理 #############
-        # 今回一番HSICが大きくなった遺伝子
-        tmp_MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))
-        # BAHSICの最大値を格納
-        HSICs <- c(HSICs, tmp_HSICs[tmp_MaxHSIC])
-        # 削除した遺伝子を登録
-        RejPosition <- c(RejPosition, which(names(tmp_HSICs[tmp_MaxHSIC]) == rownames(data)))
-        ##################################################
+
+        if(!is.nan(max(tmp_HSICs))){
+            ############### 各ステップでの最後の処理 #############
+            # 今回一番HSICが大きくなった遺伝子
+            tmp_MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))
+            if(max(HSICs) < tmp_MaxHSIC){
+                # BAHSICの最大値を格納
+                HSICs <- c(HSICs, tmp_HSICs[tmp_MaxHSIC])
+                # 削除した遺伝子を登録
+                RejPosition <- c(RejPosition, which(names(tmp_HSICs[tmp_MaxHSIC]) == rownames(data)))
+            ##################################################
+            }else{
+                break
+            }
+        }else{
+            break
+        }
     }
     ######################################################
 
 
     ######################################################
-    if(max(HSICs) != HSICs[nrow(data)-1]){
+    if(max(HSICs) != HSICs[i]){
         DEGs_HSICs <- which(HSICs >= max(HSICs))
         # 結果を出力
         list(
