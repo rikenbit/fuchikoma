@@ -257,16 +257,16 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
         ############### 各ステップでの最後の処理 #############
         # 今回一番HSICが大きくなった遺伝子
         if(length(tmp_HSICs) != 0){
-            tmp_MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))[1]
+            tmp_MaxHSIC <- tmp_HSICs[which(tmp_HSICs == max(tmp_HSICs))][1]
         }else{
             tmp_MaxHSIC <- - 100
         }
         # HSICsがこれまでのHSICsの最大値よりも小さくなったら打ち切り
         if(max(HSICs) < tmp_MaxHSIC){
             # BAHSICの最大値を格納
-            HSICs <- c(HSICs, tmp_HSICs[tmp_MaxHSIC])
+            HSICs <- c(HSICs, tmp_MaxHSIC)
             # 削除した遺伝子を登録
-            RejPosition <- c(RejPosition, which(names(tmp_HSICs[tmp_MaxHSIC]) == rownames(data)))
+            RejPosition <- c(RejPosition, which(names(tmp_MaxHSIC) == rownames(data)))
         ##################################################
         }else{
             break
