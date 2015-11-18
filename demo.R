@@ -243,36 +243,47 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
         }
         ############### 各ステップでの最後の処理 #############
         # 今回一番HSICが大きくなった遺伝子
-        MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))
+        tmp_MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))
         # BAHSICの最大値を格納
-        HSICs <- c(HSICs, tmp_HSICs[MaxHSIC])
+        HSICs <- c(HSICs, tmp_HSICs[tmp_MaxHSIC])
         # 削除した遺伝子を登録
-        RejPosition <- c(RejPosition, which(names(tmp_HSICs[MaxHSIC]) == rownames(data)))
+        RejPosition <- c(RejPosition, which(names(tmp_HSICs[tmp_MaxHSIC]) == rownames(data)))
         ##################################################
     }
     ######################################################
 
-    # 結果を出力
-    list(
-        DEGs = rownames(data)[setdiff(1:nrow(data), RejPosition)],
-        BAHSICs = BAHSICs
-    )
+
+    ######################################################
+    if(max(HSICs) != HSICs[nrow(data)]){
+        DEGs_HSICs <- which(HSICs >= max(HSICs))
+        # 結果を出力
+        list(
+            DEGs = names(HSICs[DEGs_HSICs])
+            ,
+            HSICs = HSICs
+        )
+    }else{
+        list(DEGs = NA, HSICs = NA)
+    }
 }
 
 
 ####################### 試しに実行 #####################
 # 標準正規分布
-CellA <- data.frame(matrix(rnorm(150*20), nrow=150, ncol=20))
-CellB <- data.frame(matrix(rnorm(150*20), nrow=150, ncol=20))
-CellC <- data.frame(matrix(rnorm(150*20), nrow=150, ncol=20))
+CellA <- data.frame(matrix(rnorm(100*20), nrow=100, ncol=20))
+CellB <- data.frame(matrix(rnorm(100*20), nrow=100, ncol=20))
+CellC <- data.frame(matrix(rnorm(100*20), nrow=100, ncol=20))
 
 # DEGを指定（** 最適な作り方調査が必要 **）
 # ...
+CellA[1:10, ] <- CellA[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
+CellB[11:20, ] <- CellB[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
+CellC[21:30, ] <- CellC[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
 
 testdata <- data.frame(CellA, CellB, CellC)
 
 colnames(testdata) <- c(paste0("CellA_", 1:20), paste0("CellB_", 1:20), paste0("CellC_", 1:20))
-rownames(testdata) <- paste0("Gene", 1:150)
+rownames(testdata) <- paste0("Gene", 1:nrow(testdata))
 
 # ラベル
 label <- c(rep(1, 20), rep(2, 20), rep(3, 20))
