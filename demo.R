@@ -189,7 +189,7 @@ CatKernel <- function(label, type=c("two", "one_vs_rest", "each")){
             warning("Wrong type parameter!")
         }
     }else{
-        warning("Please confirm your label vector!")
+        warning("Confirm your label vector!")
     }
 }
 
@@ -205,20 +205,16 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
 
     ############ ラベル側のグラム行列（一回のみ） ##############
     if((mode == "Supervised") && (is.vector(label))){
-        if(!type){
-            L <- CatKernel(label, type=type)
-        }else{
-            warning("type is two, one_vs_rest, or each!")
-        }
+        L <- CatKernel(label, type=type)
     }else if(mode == "Unsupervised"){
         if(is.matrix(Comp)){
-            EigenVecs <- custom.DiffusionMap(as.ExpressionSet(data), n.eigs=n.eigs)$eigenvectors[, Comp]
+            EigenVecs <- custom.DiffusionMap(as.ExpressionSet(as.dataframe(t(data))), n.eigs=n.eigs)$eigenvectors[, Comp]
             L <- t(EigenVecs) %*% EigenVecs
         }else{
             warning("Specify Comp!")
         }
     }else{
-        warning("Wong mode!")
+        warning("Wrong mode!")
     }
     ######################################################
 
@@ -236,22 +232,22 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
         SurvPosition <- setdiff(1:nrow(data), RejPosition)
         # このステップでの仮のHSICs
         tmp_HSICs <- rep(0, length=length(SurvPosition))
-        # 生き残ってる遺伝子の名前
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
+
         for(j in 1:length(SurvPosition)){
             # データ側のグラム行列
-            dif <- custom.DiffusionMap(as.ExpressionSet(data[SurvPosition,]), n.eigs=n.eigs)
+            dif <- custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs)
             K <- dif$M
             # HSICを計算
-            tmp_HSICs <- c(tmp_HSICs, HSIC(K, L, N))
+            tmp_HSICs[j] <- HSIC(K, L, N)
         }
         ############### 各ステップでの最後の処理 #############
         # 今回一番HSICが大きくなった遺伝子
         MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))
         # BAHSICの最大値を格納
-        HSICs <- c(HSICs, tmp_HSIC[MaxHSIC])
+        HSICs <- c(HSICs, tmp_HSICs[MaxHSIC])
         # 削除した遺伝子を登録
-        RejPosition <- c(RejPosition, which(names(tmp_HSIC[MaxHSIC]) == colnames(data)))
+        RejPosition <- c(RejPosition, which(names(tmp_HSICs[MaxHSIC]) == rownames(data)))
         ##################################################
     }
     ######################################################
@@ -270,8 +266,9 @@ CellA <- data.frame(matrix(rnorm(150*20), nrow=150, ncol=20))
 CellB <- data.frame(matrix(rnorm(150*20), nrow=150, ncol=20))
 CellC <- data.frame(matrix(rnorm(150*20), nrow=150, ncol=20))
 
-# DEGを指定（** 要最適な作り方調査 **）
-#
+# DEGを指定（** 最適な作り方調査が必要 **）
+# ...
+
 testdata <- data.frame(CellA, CellB, CellC)
 
 colnames(testdata) <- c(paste0("CellA_", 1:20), paste0("CellB_", 1:20), paste0("CellC_", 1:20))
@@ -284,16 +281,20 @@ label <- c(rep(1, 20), rep(2, 20), rep(3, 20))
 res.pca <- prcomp(testdata)
 pairs(res.pca$rotation[, 1:20], col=label)
 
-# オブジェクト化
-testdata.obj <- as.ExpressionSet(testdata)
+
 
 ######## Diffusion Mapを実行（第10主成分までを見る） ####
+# オブジェクト化
+testdata.obj <- as.ExpressionSet(as.data.frame(t(testdata)))
+
 dif1 <- DiffusionMap(testdata.obj, n.eigs=10)
 pairs(eigenvectors(dif1), col=label)
 
 # 改造Ver Diffusion Map
 dif2 <- custom.DiffusionMap(testdata.obj, n.eigs=10)
 pairs(dif2$eigenvectors, col=label)
+
+
 
 ################### FUCHIKOMA実行 ###################
 # 教師あり（クラスラベルを与える）
