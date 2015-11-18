@@ -207,9 +207,9 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     if((mode == "Supervised") && (is.vector(label))){
         L <- CatKernel(label, type=type)
     }else if(mode == "Unsupervised"){
-        if(is.matrix(Comp)){
-            EigenVecs <- custom.DiffusionMap(as.ExpressionSet(as.dataframe(t(data))), n.eigs=n.eigs)$eigenvectors[, Comp]
-            L <- t(EigenVecs) %*% EigenVecs
+        if(is.vector(Comp)){
+            EigenVecs <- custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), n.eigs=n.eigs)$eigenvectors[, Comp]
+            L <- EigenVecs %*% t(EigenVecs)
         }else{
             warning("Specify Comp!")
         }
