@@ -25,7 +25,6 @@ devtools::install_github("rikenbit/FUCHIKOMA")
 ```
 
 # 依存パッケージ（予定）
-- kernlab（v-X.Y.Z）
 - destiny (v-X.Y.Z)
 
 # 使い方（予定）

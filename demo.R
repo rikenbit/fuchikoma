@@ -1,5 +1,4 @@
 # パッケージ読み込み
-library(kernlab)
 library(destiny)
 
 ###################### 各種関数定義 #####################
@@ -197,6 +196,8 @@ CatKernel <- function(label, type=c("two", "one_vs_rest", "each")){
 HSIC <- function(K, L, N){
     H <- matrix(rep(-1/N), nrow=N, ncol=N)
     diag(H) <- 1 - 1/N
+    K <- as.matrix(K)
+    L <- as.matrix(L)
     sum(diag(K %*% H %*% L %*% H)) / (N-1)^2
 }
 
@@ -222,7 +223,7 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     # データ数
     N <- ncol(data)
     # HSIC値の格納先
-    HSICs <- c()
+    HSICs <- rep(0, length=nrow(data))
     # 削除した遺伝子の場所
     RejPosition <- c()
 
@@ -264,7 +265,7 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
         # HSICsがこれまでのHSICsの最大値よりも小さくなったら打ち切り
         if(max(HSICs) < tmp_MaxHSIC){
             # BAHSICの最大値を格納
-            HSICs <- c(HSICs, tmp_MaxHSIC)
+            HSICs[i] <- tmp_MaxHSIC
             # 削除した遺伝子を登録
             RejPosition <- c(RejPosition, which(names(tmp_MaxHSIC) == rownames(data)))
         ##################################################
@@ -274,16 +275,11 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     }
     ######################################################
 
-    if(max(HSICs) != HSICs[i]){
-        DEGs_HSICs <- which(HSICs >= max(HSICs))
         # 結果を出力
         list(
-            DEGs = names(HSICs[DEGs_HSICs]),
+            DEGs = names(tmp_HSICs),
             HSICs = HSICs
         )
-    }else{
-        list(DEGs = NA, HSICs = NA)
-    }
 }
 
 
@@ -327,11 +323,22 @@ pairs(dif2$eigenvectors, col=label)
 
 ################### FUCHIKOMA実行 ###################
 # 教師あり（クラスラベルを与える）
-result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10)
+result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="one_vs_rest", n.eigs=10)
+
+head(result1$DEGs)
+plot(result1$HSICs)
+
+result2 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10)
+
+head(result2$DEGs)
+plot(result2$HSICs)
+
 
 # 教師なし（指定した主成分を使う）
-result2 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2), n.eigs=10)
+result3 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2), n.eigs=10)
 
+head(result3$DEGs)
+plot(result3$HSICs)
 
 
 
