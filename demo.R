@@ -226,7 +226,7 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     # 削除した遺伝子の場所
     RejPosition <- c()
 
-    for(i in 1:nrow(data)){
+    for(i in 1:(nrow(data)-1)){
         print(i)
         #️ このステップで見る遺伝子（生き残り）
         SurvPosition <- setdiff(1:nrow(data), RejPosition)
@@ -254,7 +254,7 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
 
 
     ######################################################
-    if(max(HSICs) != HSICs[nrow(data)]){
+    if(max(HSICs) != HSICs[nrow(data)-1]){
         DEGs_HSICs <- which(HSICs >= max(HSICs))
         # 結果を出力
         list(
