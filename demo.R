@@ -226,7 +226,8 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     # 削除した遺伝子の場所
     RejPosition <- c()
 
-    for(i in 1:nrow(data)){
+    #️ BAHSICの計算ステップ
+    for(i in 1:(nrow(data)-1)){
         print(i)
         #️ このステップで見る遺伝子（生き残り）
         SurvPosition <- setdiff(1:nrow(data), RejPosition)
@@ -234,41 +235,50 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
         tmp_HSICs <- rep(0, length=length(SurvPosition))
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
 
+        # 生き残り内での繰り返し
         for(j in 1:length(SurvPosition)){
             # データ側のグラム行列
-            dif <- custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs)
+            dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs))
             K <- dif$M
             # HSICを計算
-            tmp_HSICs[j] <- HSIC(K, L, N)
+            tmp_HSIC <- HSIC(K, L, N)
+            # HSICsがマイナスなら打ち切り
+            if(tmp_HSIC <= 0){
+                break
+            # HSICsがNaNなら打ち切り
+            }else if(is.nan(tmp_HSIC)){
+                break
+            }else{
+                # それ以外なら格納
+                tmp_HSICs[j] <- tmp_HSIC
+            }
         }
 
-        if(!is.nan(max(tmp_HSICs))){
-            ############### 各ステップでの最後の処理 #############
-            # 今回一番HSICが大きくなった遺伝子
-            tmp_MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))
-            if(max(HSICs) < tmp_MaxHSIC){
-                # BAHSICの最大値を格納
-                HSICs <- c(HSICs, tmp_HSICs[tmp_MaxHSIC])
-                # 削除した遺伝子を登録
-                RejPosition <- c(RejPosition, which(names(tmp_HSICs[tmp_MaxHSIC]) == rownames(data)))
-            ##################################################
-            }else{
-                break
-            }
+        ############### 各ステップでの最後の処理 #############
+        # 今回一番HSICが大きくなった遺伝子
+        if(length(tmp_HSICs) != 0){
+            tmp_MaxHSIC <- which(tmp_HSICs == max(tmp_HSICs))[1]
+        }else{
+            tmp_MaxHSIC <- - 100
+        }
+        # HSICsがこれまでのHSICsの最大値よりも小さくなったら打ち切り
+        if(max(HSICs) < tmp_MaxHSIC){
+            # BAHSICの最大値を格納
+            HSICs <- c(HSICs, tmp_HSICs[tmp_MaxHSIC])
+            # 削除した遺伝子を登録
+            RejPosition <- c(RejPosition, which(names(tmp_HSICs[tmp_MaxHSIC]) == rownames(data)))
+        ##################################################
         }else{
             break
         }
     }
     ######################################################
 
-
-    ######################################################
     if(max(HSICs) != HSICs[i]){
         DEGs_HSICs <- which(HSICs >= max(HSICs))
         # 結果を出力
         list(
-            DEGs = names(HSICs[DEGs_HSICs])
-            ,
+            DEGs = names(HSICs[DEGs_HSICs]),
             HSICs = HSICs
         )
     }else{
@@ -283,8 +293,7 @@ CellA <- data.frame(matrix(rnorm(100*20), nrow=100, ncol=20))
 CellB <- data.frame(matrix(rnorm(100*20), nrow=100, ncol=20))
 CellC <- data.frame(matrix(rnorm(100*20), nrow=100, ncol=20))
 
-# DEGを指定（** 最適な作り方調査が必要 **）
-# ...
+# DEGを指定（もっと最適な作り方を調べる必要あり）
 CellA[1:10, ] <- CellA[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
 CellB[11:20, ] <- CellB[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
 CellC[21:30, ] <- CellC[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
