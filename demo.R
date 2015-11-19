@@ -131,7 +131,7 @@ custom.DiffusionMap <- function(data, sigma = NULL, k = find.dm.k(nrow(data) - 1
 }
 
 # カテゴリカルなカーネル関数
-CatKernel <- function(label, type=c("two", "one_vs_rest", "each")){
+CatKernel <- function(label, type=c("two", "one_vs_rest", "each", "simple")){
     # データ数
     N <- length(label)
 
@@ -141,54 +141,69 @@ CatKernel <- function(label, type=c("two", "one_vs_rest", "each")){
     # 集計値ベクトル
     sum.label <- sapply(label, function(x){tl[which(labels(tl)$label == x)]})
 
-    # 2-class
-    if(length(tl) == 2){
-        if((type=="two")){
-            ########### Equation (9) ############
-            sapply(label, function(x){
-                    out <- rep(0, length=length(label))
-                    # 同じクラスなら 1/m_+ - 1/m
-                    out[which(x == label)] <- 1 / tl[which(labels(tl)$label == x)] - 1 / N
-                    # 違うクラスなら - 1/m
-                    out[which(x != label)] <- - 1 / N
-                    out
-                })
-            #####################################
-        }else{
-            warning("Wrong type paramter!")
-        }
-    }
-    # multi-class
-    else if(length(tl) > 2){
-        if(type=="one_vs_rest"){
-            ########### Equation (11) ###########
-            sapply(label, function(x){
-                    out <- rep(0, length=length(label))
-                    # 同じクラスなら（C_i == C_j） 1/m_i
-                    out[which(x == label)] <- 1 / tl[which(labels(tl)$label == x)]
+    # any-class
+    if(type == "simple"){
+        ######## 化合物-タンパク質 より #########
+        sapply(label, function(x){
+                out <- rep(0, length=length(label))
+                # 同じクラスなら（C_i == C_j） 1 / m_i
+                out[which(x == label)] <- 1
 
-                    # 違うクラスなら（C_i != C_j） 1/ (m_i - N)
-                    out[which(x != label)] <- 1 / (sum.label[which(x != label)] - N)
-                    out
-                })
-            #####################################
-        }else if(type=="each"){
-            ########### Equation (12) ###########
-            sapply(label, function(x){
-                    out <- rep(0, length=length(label))
-                    # 同じクラスなら（C_i == C_j） 1/m_i
-                    out[which(x == label)] <- 1 / sqrt(tl[which(labels(tl)$label == x)])
-
-                    # 違うクラスなら（C_i != C_j） 1/ (m_i - N)
-                    out[which(x != label)] <- 0
-                    out
-                })
-            #####################################
-        }else{
-            warning("Wrong type parameter!")
-        }
+                # 違うクラスなら（C_i != C_j） 1 / (m_i - N)
+                out[which(x != label)] <- -1
+                out
+            })
+        #####################################
     }else{
-        warning("Confirm your label vector!")
+        # 2-class
+        if(length(tl) == 2){
+            if((type=="two")){
+                ########### Equation (9) ############
+                sapply(label, function(x){
+                        out <- rep(0, length=length(label))
+                        # 同じクラスなら 1/m_+ - 1/m
+                        out[which(x == label)] <- 1 / tl[which(labels(tl)$label == x)] - 1 / N
+                        # 違うクラスなら - 1/m
+                        out[which(x != label)] <- - 1 / N
+                        out
+                    })
+                #####################################
+            }else{
+                warning("Wrong type paramter!")
+            }
+        }
+        # multi-class
+        else if(length(tl) > 2){
+            if(type == "one_vs_rest"){
+                ########### Equation (11) ###########
+                sapply(label, function(x){
+                        out <- rep(0, length=length(label))
+                        # 同じクラスなら（C_i == C_j） 1 / m_i
+                        out[which(x == label)] <- 1 / tl[which(labels(tl)$label == x)]
+
+                        # 違うクラスなら（C_i != C_j） 1 / (m_i - N)
+                        out[which(x != label)] <- 1 / (sum.label[which(x != label)] - N)
+                        out
+                    })
+                #####################################
+            }else if(type == "each"){
+                ########### Equation (12) ###########
+                sapply(label, function(x){
+                        out <- rep(0, length=length(label))
+                        # 同じクラスなら（C_i == C_j） 1 / m_i
+                        out[which(x == label)] <- 1 / sqrt(tl[which(labels(tl)$label == x)])
+
+                        # 違うクラスなら（C_i != C_j） 1 / (m_i - N)
+                        out[which(x != label)] <- 0
+                        out
+                    })
+                #####################################
+            }else{
+                warning("Wrong type parameter!")
+            }
+        }else{
+            warning("Confirm your label vector!")
+        }
     }
 }
 
@@ -202,7 +217,7 @@ HSIC <- function(K, L, N){
 }
 
 # HSICを利用した特徴量抽出
-FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10){
+FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10, plot=FALSE){
 
     ############ ラベル側のグラム行列（一回のみ） ##############
     if((mode == "Supervised") && (is.vector(label))){
@@ -228,13 +243,20 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     RejPosition <- c()
 
     #️ BAHSICの計算ステップ
-    for(i in 1:(nrow(data)-1)){
-        print(i)
+    for(i in 1:nrow(data)){
+        cat(paste0("======= ", i, " =======\n"))
         #️ このステップで見る遺伝子（生き残り）
         SurvPosition <- setdiff(1:nrow(data), RejPosition)
         # このステップでの仮のHSICs
         tmp_HSICs <- rep(0, length=length(SurvPosition))
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
+
+        # 生き残り内での繰り返し（並列化Ver）
+        # 各クラスターにコピー : SurvPosition, custom.DiffusionMap, n.eigs, HSIC, N
+        # 各クラスターにコピーしたくないもの : data, L
+        # 各クラスターから出力されるもの : tmp_HSIC
+
+        # 最後にtmp_HSICsに最大のtmp_HSICを格納するか、しないか決まる
 
         # 生き残り内での繰り返し
         for(j in 1:length(SurvPosition)){
@@ -243,16 +265,23 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
             K <- dif$M
             # HSICを計算
             tmp_HSIC <- HSIC(K, L, N)
-            # HSICsがマイナスなら打ち切り
-            if(tmp_HSIC <= 0){
-                break
             # HSICsがNaNなら打ち切り
-            }else if(is.nan(tmp_HSIC)){
+            if(is.nan(tmp_HSIC)){
+                break
+            # HSICsがマイナスなら打ち切り
+            }else if(tmp_HSIC <= 0){
                 break
             }else{
                 # それ以外なら格納
                 tmp_HSICs[j] <- tmp_HSIC
             }
+        }
+
+        if(plot = TRUE){
+            layout(t(c(1,2)), 2, 1)
+            plot(tmp_HSICs, col=c(rep(2,30), rep(1, 70)), main=i, pch=16)
+            sorted_color <- c(rep(2,30), rep(1, 70))[rank(tmp_HSICs)]
+            barplot(sort(tmp_HSICs), col=sorted_color, main=i)
         }
 
         ############### 各ステップでの最後の処理 #############
@@ -270,7 +299,15 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
             RejPosition <- c(RejPosition, which(names(tmp_MaxHSIC) == rownames(data)))
         ##################################################
         }else{
-            break
+            # 差が0.0001以下なら続ける
+            if((max(HSICs) - tmp_MaxHSIC) < 0.0001){
+                # BAHSICの最大値を格納
+                HSICs[i] <- tmp_MaxHSIC
+                # 削除した遺伝子を登録
+                RejPosition <- c(RejPosition, which(names(tmp_MaxHSIC) == rownames(data)))
+            }else{
+                break
+            }
         }
     }
     ######################################################
@@ -323,22 +360,27 @@ pairs(dif2$eigenvectors, col=label)
 
 ################### FUCHIKOMA実行 ###################
 # 教師あり（クラスラベルを与える）
-result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="one_vs_rest", n.eigs=10)
+result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="one_vs_rest", n.eigs=10, plot=TRUE)
 
 head(result1$DEGs)
 plot(result1$HSICs)
 
-result2 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10)
+result2 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10, plot=TRUE)
 
 head(result2$DEGs)
 plot(result2$HSICs)
 
-
-# 教師なし（指定した主成分を使う）
-result3 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2), n.eigs=10)
+result3 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="simple", n.eigs=10, plot=TRUE)
 
 head(result3$DEGs)
 plot(result3$HSICs)
+
+
+# 教師なし（指定した主成分を使う）
+result4 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2,3), n.eigs=10, plot=TRUE)
+
+head(result4$DEGs)
+plot(result4$HSICs)
 
 
 
