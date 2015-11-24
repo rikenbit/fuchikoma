@@ -1,5 +1,9 @@
 # パッケージ読み込み
-library(destiny)
+biocLite("destiny")
+install.packages("devtools")
+devtools::install_github("hoxo-m/pforeach")
+library("destiny")
+library("pforeach")
 
 ###################### 各種関数定義 #####################
 
@@ -48,7 +52,8 @@ custom.DiffusionMap <- function(data, sigma = NULL, k = find.dm.k(nrow(data) - 1
         tic <- proc.time()
     }
     # パッケージ名を指定
-    knn <- FNN:::get.knn(imputed.data, k, algorithm = "cover_tree") # <-
+    # kd_tree, cover_tree, CR, brute
+    knn <- FNN:::get.knn(imputed.data, k, algorithm = "kd_tree") # <-
     if (verbose) {
         cat("...done. Time:\n")
         print(proc.time() - tic)
@@ -217,7 +222,7 @@ HSIC <- function(K, L, N){
 }
 
 # HSICを利用した特徴量抽出
-FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10, plot=FALSE){
+FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10, plot=FALSE, n.cores=n.cores){
 
     ############ ラベル側のグラム行列（一回のみ） ##############
     if((mode == "Supervised") && (is.vector(label))){
@@ -247,19 +252,9 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
         cat(paste0("======= ", i, " =======\n"))
         #️ このステップで見る遺伝子（生き残り）
         SurvPosition <- setdiff(1:nrow(data), RejPosition)
-        # このステップでの仮のHSICs
-        tmp_HSICs <- rep(0, length=length(SurvPosition))
-        names(tmp_HSICs) <- rownames(data)[SurvPosition]
-
-        # 生き残り内での繰り返し（並列化Ver）
-        # 各クラスターにコピー : SurvPosition, custom.DiffusionMap, n.eigs, HSIC, N
-        # 各クラスターにコピーしたくないもの : data, L
-        # 各クラスターから出力されるもの : tmp_HSIC
-
-        # 最後にtmp_HSICsに最大のtmp_HSICを格納するか、しないか決まる
 
         # 生き残り内での繰り返し
-        for(j in 1:length(SurvPosition)){
+        tmp_HSICs <- pforeach(j = 1:length(SurvPosition), .cores=n.cores, .export=c("SurvPosition", "custom.DiffusionMap", "n.eigs", "HSIC", "N", "data", "L"))({
             # データ側のグラム行列
             dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs))
             K <- dif$M
@@ -275,9 +270,10 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
                 # それ以外なら格納
                 tmp_HSICs[j] <- tmp_HSIC
             }
-        }
+        })
+        names(tmp_HSICs) <- rownames(data)[SurvPosition]
 
-        if(plot = TRUE){
+        if(plot == TRUE){
             layout(t(c(1,2)), 2, 1)
             plot(tmp_HSICs, col=c(rep(2,30), rep(1, 70)), main=i, pch=16)
             sorted_color <- c(rep(2,30), rep(1, 70))[rank(tmp_HSICs)]
@@ -360,24 +356,24 @@ pairs(dif2$eigenvectors, col=label)
 
 ################### FUCHIKOMA実行 ###################
 # 教師あり（クラスラベルを与える）
-result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="one_vs_rest", n.eigs=10, plot=TRUE)
+result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="one_vs_rest", n.eigs=10, n.cores=4, plot=TRUE)
 
 head(result1$DEGs)
 plot(result1$HSICs)
 
-result2 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10, plot=TRUE)
+result2 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10, n.cores=4, plot=TRUE)
 
 head(result2$DEGs)
 plot(result2$HSICs)
 
-result3 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="simple", n.eigs=10, plot=TRUE)
+result3 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="simple", n.eigs=10, n.cores=4, plot=TRUE)
 
 head(result3$DEGs)
 plot(result3$HSICs)
 
 
 # 教師なし（指定した主成分を使う）
-result4 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2,3), n.eigs=10, plot=TRUE)
+result4 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2,3), n.eigs=10, n.cores=4, plot=TRUE)
 
 head(result4$DEGs)
 plot(result4$HSICs)
