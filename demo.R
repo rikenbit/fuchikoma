@@ -222,7 +222,7 @@ HSIC <- function(K, L, N){
 }
 
 # HSICを利用した特徴量抽出
-FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10, plot=FALSE, n.cores=n.cores){
+FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10, n.cores=n.cores, algorithm=c("brute", "song"), n.skip=5, threshold=0.01){
 
     ############ ラベル側のグラム行列（一回のみ） ##############
     if((mode == "Supervised") && (is.vector(label))){
@@ -239,79 +239,127 @@ FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, la
     }
     ######################################################
 
-    ######################## BAHSIC ######################
-    # データ数
-    N <- ncol(data)
-    # HSIC値の格納先
-    HSICs <- rep(0, length=nrow(data))
-    # 削除した遺伝子の場所
-    RejPosition <- c()
+    ######################################################
+    ######################## brute ######################
+    ######################################################
+    if(algorithm == "brute"){
+        # データ数
+        N <- ncol(data)
+        # HSIC値の格納先
+        HSICs <- rep(0, length=nrow(data))
+        # 削除した遺伝子の場所
+        RejPosition <- c()
 
-    #️ BAHSICの計算ステップ
-    for(i in 1:nrow(data)){
-        cat(paste0("======= ", i, " =======\n"))
-        #️ このステップで見る遺伝子（生き残り）
-        SurvPosition <- setdiff(1:nrow(data), RejPosition)
+        #️ BAHSICの計算ステップ
+        for(i in 1:nrow(data)){
+            cat(paste0("======= ", i, " =======\n"))
+            #️ このステップで見る遺伝子（生き残り）
+            SurvPosition <- setdiff(1:nrow(data), RejPosition)
 
-        # 生き残り内での繰り返し
-        tmp_HSICs <- pforeach(j = 1:length(SurvPosition), .cores=n.cores, .export=c("SurvPosition", "custom.DiffusionMap", "n.eigs", "HSIC", "N", "data", "L"))({
-            # データ側のグラム行列
-            dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs))
-            K <- dif$M
-            # HSICを計算
-            tmp_HSIC <- HSIC(K, L, N)
-            # HSICsがNaNなら打ち切り
-            if(is.nan(tmp_HSIC)){
-                break
-            # HSICsがマイナスなら打ち切り
-            }else if(tmp_HSIC <= 0){
-                break
+            # 生き残り内での繰り返し
+            tmp_HSICs <- pforeach(j = 1:length(SurvPosition), .cores=n.cores, .export=c("SurvPosition", "custom.DiffusionMap", "n.eigs", "HSIC", "N", "data", "L"))({
+                # データ側のグラム行列
+                dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs))
+                K <- dif$M
+                # HSICを計算
+                tmp_HSIC <- HSIC(K, L, N)
+                # HSICsがNaNなら打ち切り
+                if(is.nan(tmp_HSIC)){
+                    break
+                # HSICsがマイナスなら打ち切り
+                }else if(tmp_HSIC <= 0){
+                    break
+                }else{
+                    # それ以外なら格納
+                    return(tmp_HSIC)
+                }
+            })
+            names(tmp_HSICs) <- rownames(data)[SurvPosition]
+
+            ############### 各ステップでの最後の処理 #############
+            # 今回一番HSICが大きくなった遺伝子
+            if(length(tmp_HSICs) != 0){
+                tmp_MaxHSIC <- tmp_HSICs[which(tmp_HSICs == max(tmp_HSICs))][1]
             }else{
-                # それ以外なら格納
-                tmp_HSICs[j] <- tmp_HSIC
+                tmp_MaxHSIC <- - 100
             }
-        })
-        names(tmp_HSICs) <- rownames(data)[SurvPosition]
-
-        if(plot == TRUE){
-            layout(t(c(1,2)), 2, 1)
-            plot(tmp_HSICs, col=c(rep(2,30), rep(1, 70)), main=i, pch=16)
-            sorted_color <- c(rep(2,30), rep(1, 70))[rank(tmp_HSICs)]
-            barplot(sort(tmp_HSICs), col=sorted_color, main=i)
-        }
-
-        ############### 各ステップでの最後の処理 #############
-        # 今回一番HSICが大きくなった遺伝子
-        if(length(tmp_HSICs) != 0){
-            tmp_MaxHSIC <- tmp_HSICs[which(tmp_HSICs == max(tmp_HSICs))][1]
-        }else{
-            tmp_MaxHSIC <- - 100
-        }
-        # HSICsがこれまでのHSICsの最大値よりも小さくなったら打ち切り
-        if(max(HSICs) < tmp_MaxHSIC){
-            # BAHSICの最大値を格納
-            HSICs[i] <- tmp_MaxHSIC
-            # 削除した遺伝子を登録
-            RejPosition <- c(RejPosition, which(names(tmp_MaxHSIC) == rownames(data)))
-        ##################################################
-        }else{
-            # 差が0.0001以下なら続ける
-            if((max(HSICs) - tmp_MaxHSIC) < 0.0001){
+            # HSICsがこれまでのHSICsの最大値よりも小さくなったら打ち切り
+            if(max(HSICs) < tmp_MaxHSIC){
                 # BAHSICの最大値を格納
                 HSICs[i] <- tmp_MaxHSIC
                 # 削除した遺伝子を登録
                 RejPosition <- c(RejPosition, which(names(tmp_MaxHSIC) == rownames(data)))
+            ##################################################
+            }else{
+                # 差がthreshold以下なら続ける
+                if((max(HSICs) - tmp_MaxHSIC) < threshold){
+                    # BAHSICの最大値を格納
+                    HSICs[i] <- tmp_MaxHSIC
+                    # 削除した遺伝子を登録
+                    RejPosition <- c(RejPosition, which(names(tmp_MaxHSIC) == rownames(data)))
+                }else{
+                    break
+                }
+            }
+        }
+    ######################################################
+    ######################################################
+    ######################################################
+
+    ######################################################
+    ######################### song #######################
+    ######################################################
+    }else if(algorithm == "song"){
+        # データ数
+        N <- ncol(data)
+        # HSIC値の格納先
+        HSICs <- 0
+        # 削除した遺伝子の場所
+        RejPosition <- c()
+
+        # 生き残った遺伝子の場所
+        SurvPosition <- 1:nrow(data)
+        #️ BAHSICの計算ステップ
+        while(length(SurvPosition) > n.skip){
+            #️ このステップで見る遺伝子（生き残り）
+            SurvPosition <- setdiff(1:nrow(data), RejPosition)
+            cat(paste0("### No. of remaining gene is ", length(SurvPosition), " ###\n"))
+
+            # 生き残り内での繰り返し
+            tmp_HSICs <- pforeach(j = SurvPosition, .cores=n.cores, .export=c("SurvPosition", "custom.DiffusionMap", "n.eigs", "HSIC", "N", "data", "L"))({
+                # データ側のグラム行列
+                dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs))
+                K <- dif$M
+                # HSICを計算
+                tmp_HSIC <- HSIC(K, L, N)
+                return(tmp_HSIC)
+            })
+            names(tmp_HSICs) <- rownames(data)[SurvPosition]
+
+            ############### 各ステップでの最後の処理 #############
+            tmp_MaxHSICs <- rev(sort(tmp_HSICs))[1:n.skip]
+            # 打ち切り
+            if(max(HSICs) - max(tmp_MaxHSICs) < threshold){
+                # BAHSICの最大値を格納
+                HSICs <- c(HSICs, tmp_MaxHSICs)
+                # 削除した遺伝子を登録
+                RejPosition <- c(RejPosition, unlist(sapply(names(tmp_MaxHSICs), function(x){which(x == rownames(data))})))
             }else{
                 break
             }
         }
-    }
+
     ######################################################
+    ######################################################
+    ######################################################
+    }else{
+        warning("Wrong algorithm!")
+    }
 
         # 結果を出力
         list(
             DEGs = names(tmp_HSICs),
-            HSICs = HSICs
+            HSICs = HSICs[2:length(HSICs)]
         )
 }
 
@@ -356,24 +404,24 @@ pairs(dif2$eigenvectors, col=label)
 
 ################### FUCHIKOMA実行 ###################
 # 教師あり（クラスラベルを与える）
-result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="one_vs_rest", n.eigs=10, n.cores=4, plot=TRUE)
+result1 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="one_vs_rest", n.eigs=10, n.cores=4, algorithm="song", n.skip=10, threshold=0.01)
 
 head(result1$DEGs)
 plot(result1$HSICs)
 
-result2 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10, n.cores=4, plot=TRUE)
+result2 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="each", n.eigs=10, n.cores=4, algorithm="song", n.skip=5, threshold=0.01)
 
 head(result2$DEGs)
 plot(result2$HSICs)
 
-result3 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="simple", n.eigs=10, n.cores=4, plot=TRUE)
+result3 <- FUCHIKOMA(data=testdata, mode="Supervised", label=label, type="simple", n.eigs=10, n.cores=4, algorithm="song", n.skip=5, threshold=0.01)
 
 head(result3$DEGs)
 plot(result3$HSICs)
 
 
 # 教師なし（指定した主成分を使う）
-result4 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2,3), n.eigs=10, n.cores=4, plot=TRUE)
+result4 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2,3), n.eigs=10, n.cores=4, algorithm="song", n.skip=5, threshold=0.01)
 
 head(result4$DEGs)
 plot(result4$HSICs)
