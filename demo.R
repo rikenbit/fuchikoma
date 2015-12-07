@@ -4,6 +4,7 @@ install.packages("devtools")
 devtools::install_github("hoxo-m/pforeach")
 library("destiny")
 library("pforeach")
+library("matrixcalc")
 
 ###################### 各種関数定義 #####################
 
@@ -221,6 +222,32 @@ HSIC <- function(K, L, N){
     sum(diag(K %*% H %*% L %*% H)) / (N-1)^2
 }
 
+# HSICのP値
+Pval.HSIC <- function(K, L, N, HSIC){
+    # HSICの期待値
+    u_x2 <- 1/(N*(N-1)) * upper.tri(K)
+    y_y2 <- 1/(N*(N-1)) * upper.tri(L)
+    E_HSIC <- 1 / N * (1 + u_x2 * u_y2 - u_x2 - u_y2)
+
+    # HSICの分散
+    H <- matrix(rep(-1/N), nrow=N, ncol=N)
+    diag(H) <- 1 - 1/N
+    B <- H%*%K%*%H * H%*%L%*%H
+    B <- B * B
+    One <- rep(1, length=N)
+    var_HSIC <- 2*(N-4)*(N-5)/(N*(N-1)*(N-2)*(N-3))*t(One) * (B-diag(B))*One
+
+    # Shape parameter
+    Alpha <- E_HSIC^2 / var_HSIC
+    # Scale paramter
+    Beta <- N * var_HSIC / E_HSIC
+    # この値がガンマ分布に従う
+    x <- N * HSIC
+
+    # 1-CDFとなっているけど、結局pgamma計算したということ？
+    pgamma(x, shape=Alpha, scale=Beta, lower.tail=FALSE)
+}
+
 # HSICを利用した特徴量抽出
 FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, type=FALSE, n.eigs=10, n.cores=n.cores, algorithm=c("brute", "song"), n.skip=5, threshold=0.01){
 
@@ -425,10 +452,6 @@ result4 <- FUCHIKOMA(data=testdata, mode="Unsupervised", Comp=c(1,2,3), n.eigs=1
 
 head(result4$DEGs)
 plot(result4$HSICs)
-
-
-
-
 
 
 
