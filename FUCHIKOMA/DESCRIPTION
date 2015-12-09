@@ -1,9 +1,11 @@
 Package: FUCHIKOMA
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
-Date: 2015-12-03
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Title: Detection of Differentially Expressed Genes in one of multiple clusters using BAHSIC and Diffusion Map
+Version: 0.0.1
+Date: 2015-12-3
+Author: Koki Tsuyuzaki, Haruka Ozaki, Mika Yoshimura, Itoshi Nikaido
+Maintainer: Koki Tsuyuzaki <k.t.the-answer@hotmail.co.jp>
+Depends: R (>= 2.5.0), destiny, doParallel, foreach
+biocViews: Bioinformatics, DifferentialExpression, Clustering, MultipleComparisons, RNAseq, HighThroughputSequencing, Sequencing, Software
+Description: FUCHIKOMA detects differentially expressed genes (DEGs) in one of multiple clusters. To detect DEGs, FUCHIKOMA has two calculation mode; "supervised-mode" and "unsupervised-mode". In supervised-mode, FUCHIKOMA detects DEGs by using a label vector, in which the cluster of each sample or cell is written. In unsupervised-mode, FUCHIKOMA detects DEGs without the label vector. In this mode, user run the diffusion map, and specify which diffusion components contribute to the difference of such cluster.
+License: Artistic-2.0

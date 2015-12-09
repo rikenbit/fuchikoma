@@ -1,608 +1,418 @@
-################################# Definition of Objects ####################################
-load("BreastCancer.rda")
-BreastCancer <- data
-load("pvals.rda")
-pvals <- output
-load("StudyA.rda")
-load("result.rda")
-Result.Meta <- result
-
-############################################################################################
-
-original.busca <- function (x, S){
-	which(S[,1] == x[1] & S[,2] == x[2])
-}
-original.n.menor <- function (x, S1, S2){
-	length(which(S1 <= x[1] &  S2 <= x[2]))
-}
-
-text.busca_unix <- "
-# include <Rcpp.h>
-// [[Rcpp::export]]
-
-Rcpp::NumericVector busca (Rcpp::NumericVector x, Rcpp::NumericMatrix S){
-using std::vector;
-vector<int> out;
-int rS = S.nrow();
-
-for(int i=0; i<rS; i++){
-	if((S(i,0) == x[0]) && (S(i,1) == x[1])){
-		int j = i + 1;
-		out.push_back(j);
-		break;
-	}
-}
-return Rcpp::wrap(out);
-}
-"
-
-text.n.menor_unix <- "
-# include <Rcpp.h>
-
-// [[Rcpp::export]]
-
-Rcpp::NumericVector nmenor (Rcpp::NumericVector x, Rcpp::NumericVector S1, Rcpp::NumericVector S2){
-
-using std::vector;
-vector<int> out;
-int rS = S1.size();
-
-for(int i=0; i<rS; i++){
-	if((S1[i] <= x[0]) && (S2[i] <= x[1])){
-		out.push_back(i);
-	}
-}
-return Rcpp::wrap(out.size());
-}
-"
-
-# Windowsにも対応できるように、改行文字を書き換え
-text.n.menor_win <- gsub("\n", "\r\n", text.n.menor_unix)
-text.busca_win <- gsub("\n", "\r\n", text.busca_unix)
-
-Accelerate.NOISeq <- function(OS=NULL){
-	if(OS == "Unix"){
-		data(text.n.menor_unix)
-		data(text.busca_unix)
-		env <- getNamespace("NOISeq")
-		sourceCpp(code = text.n.menor_unix)
-		sourceCpp(code = text.busca_unix)
-		assignInNamespace("busca", busca, ns="NOISeq", envir=env)
-		assignInNamespace("n.menor", nmenor, ns="NOISeq", envir=env)		
-	}
-	if(OS == "Windows"){
-		data(text.n.menor_win)
-		data(text.busca_win)
-		env <- getNamespace("NOISeq")
-		sourceCpp(code = text.n.menor_win)
-		sourceCpp(code = text.busca_win)
-		assignInNamespace("busca", busca, ns="NOISeq", envir=env)
-		assignInNamespace("n.menor", nmenor, ns="NOISeq", envir=env)
-	}
-	else{
-		warning("Please specify OS as Unix or Windows!")
-	}
-}
-
-Reset.Accelerate.NOISeq <- function(){
-	env <- getNamespace("NOISeq")
-	assignInNamespace("busca", original.busca, ns="NOISeq", envir=env)
-	assignInNamespace("n.menor", original.n.menor, ns="NOISeq", envir=env)
-}
-
-############################################################################################
-
-meta.readData <- function(data = NULL, factors = NULL, length = NULL, biotype = NULL, chromosome = NULL, gc = NULL, studies = NULL){
-	if(is.null(studies)){
-		stop("Please specify \"studies\" at first!\n")
-	}
-	else if(!is.vector(factors)){
-		stop("Please \"factors\" parameter as vector.\n")
-	}
-	else if(!is.vector(studies)){
-		stop("Please \"studies\" parameter as vector.\n")
-	}
-	else if(length(factors) != length(studies)){
-		stop("Length of factors and that of studies are different!\n")
-	}else{
-
-		out <- list()
-		l <- nlevels(as.factor(studies))
-		length(out) <- l
-
-		length2 <- NULL
-		biotype2 <- NULL
-		chromosome2 <- NULL
-		gc2 <- NULL
-
-		if(!is.null(length)){length2 <- length}
-		if(!is.null(biotype)){biotype2 <- biotype}
-		if(!is.null(chromosome)){chromosome2 <- chromosome}
-		if(!is.null(gc)){gc2 <- gc}
-
-		e <<- new.env()
-		e$factors <- factors
-		e$studies <- studies
-		e$length <- length2
-		e$biotype <- biotype2
-		e$chromosome <- chromosome2
-		e$gc <- gc2
-
-		loc <- list()
-		length(loc) <- l
-		e$loc <- loc
-
-		for(x in 1:l){
-			loc[[x]] <- which(e$studies == levels(as.factor(e$studies))[x])
-			e$loc[[x]] <- loc[[x]]
-			out[[x]] <- readData(data = data[, e$loc[[x]]], factors = as.data.frame(e$factors[e$loc[[x]]]),
-				length = e$length, biotype = e$biotype, chromosome = e$chromosome, gc = e$gc)
-		}
-	}
-	class(out) <- "metaExpressionSet"
-	return(out)
-}
-
-############################################################################################
-
-original.probdeg <- function (Mg, Dg, Mn, Dn, prec = 2) {
-    tot <- length(Mn)
-    gens <- names(Mg)
-    Mruido <- abs(round(Mn, prec))
-    Druido <- round(Dn, prec)
-    Mgen <- abs(round(Mg, prec))
-    Dgen <- round(Dg, prec)
-    MDgen <- na.omit(cbind(Mgen, Dgen))
-    MDunic <- unique(MDgen)
-    Nres <- apply(MDunic, 1, n.menor, S1 = Mruido, S2 = Druido)
-    lugares <- apply(MDgen, 1, busca, S = MDunic)
-    Nconj <- Nres[lugares]
-    names(Nconj) <- names(lugares)
-    laprob <- Nconj/tot
-    laprob <- laprob[gens]
-    names(laprob) <- gens
-    Nconj <- Nconj[gens]
-    names(Nconj) <- gens
-    laprob <- list(prob = laprob, numDE = Nconj, numNOISE = tot)
-    laprob
-}
-
-############################################################################################
-
-original.MD <- function (dat = dat, selec = c(1:nrow(dat))) {
-    pares <- as.matrix(combn(ncol(dat), 2))
-    if (NCOL(pares) > 30) {
-        sub30 <- sample(1:NCOL(pares), size = 30, replace = FALSE)
-        pares <- pares[, sub30]
-    }
-    mm <- NULL
-    dd <- NULL
-    for (i in 1:ncol(pares)) {
-        a <- dat[selec, pares[1, i]]
-        b <- dat[selec, pares[2, i]]
-        mm <- cbind(mm, log(a/b, 2))
-        dd <- cbind(dd, abs(a - b))
-    }
-    list(M = mm, D = dd)
-}
-############################################################################################
-
-custom.probdeg <- function (Mg, Dg, Mn, Dn, prec = 2) {
-	tot <- length(Mn)
-	gens <- names(Mg)
-	Mruido <- round(Mn, prec)
-	Druido <- round(Dn, prec)
-	Mgen <- round(Mg, prec)
-	Dgen <- round(Dg, prec)
-	MDgen <- na.omit(cbind(Mgen, Dgen))
-	MDunic <- unique(MDgen)  
-	Nres <- apply(MDunic, 1, NOISeq:::n.menor, S1 = Mruido, S2 = Druido)
-	lugares <- apply(MDgen, 1, NOISeq:::busca, S = MDunic)
-	Nconj <- Nres[lugares]
-	names(Nconj) <- names(lugares)
-	laprob <- Nconj / tot
-	laprob <- laprob[gens]
-	names(laprob) <- gens
-	Nconj <- Nconj[gens]
-	names(Nconj) <- gens
-	laprob <- list("prob" = laprob, "numDE" = Nconj, "numNOISE" = tot)
-	laprob
-}
-
-############################################################################################
-
-custom.MD <- function (dat = dat, selec = c(1:nrow(dat))) {
-  pares <- as.matrix(combn(ncol(dat), 2))
-
-  if (NCOL(pares) > 30) {  
-    sub30 <- sample(1:NCOL(pares), size = 30, replace = FALSE)
-    pares <- pares[,sub30]
-  }
-  
-  mm <- NULL
-  dd <- NULL
-  for (i in 1:ncol(pares)) {
-    a <- dat[selec,pares[1,i]]
-    b <- dat[selec,pares[2,i]]
-    mm <- cbind(mm, log(a/b, 2))
-    dd <- cbind(dd, (a-b))
-  }
-  list("M" = mm, "D" = dd)
-}
-
-############################################################################################
-
-oneside.noiseq <- function(input, k = 0.5, norm = c("rpkm", "uqua", "tmm", "n"), 
-    replicates = c("technical", "biological", "no"), factor = NULL, 
-    conditions = NULL, pnr = 0.2, nss = 5, v = 0.02, lc = 1, x = NULL){
-
-	env <- getNamespace("NOISeq")
-	assignInNamespace("probdeg", custom.probdeg, ns="NOISeq", envir=env)
-	assignInNamespace("MD", custom.MD, ns="NOISeq", envir=env)
-
-	k2 = 0.5
-	norm2 = c("rpkm", "uqua", "tmm", "n")
-   	replicates2 = c("technical", "biological", "no")
-   	factor2 = NULL
-   	conditions2 = NULL
-   	pnr2 = 0.2
-   	nss2 = 5
-   	v2 = 0.02
-   	lc2 = 1
-
-   	if(k != 0.5){k2 <- k}
-   	if(length(norm) != 4){norm2 <- norm}
-   	if(length(replicates) != 3){replicates2 <- replicates}
-   	if(!is.null(factor)){factor2 <- factor}
-   	if(!is.null(conditions)){conditions2 <- conditions}
-   	if(pnr != 0.2){pnr2 <- pnr}
-   	if(nss != 5){nss2 <- nss}
-   	if(v != 0.02){v2 <- v}
-   	if(lc != 1){lc2 <- lc}
-
-  	e2 <<- new.env()
-  	e2$k <- k2
-  	e2$norm <- norm2
-  	e2$replicates <- replicates2
-  	e2$factor <- factor2
-  	e2$conditions <- conditions2
-  	e2$pnr <- pnr2
-  	e2$nss <- nss2
-  	e2$v <- v2
-  	e2$lc <- lc2
-
-	# Return
-	fff <- eval(parse(text=eval(parse(text="e2$factor"))))
-	A <- length(which(conditions[1] == fff))
-	B <- length(which(conditions[2] == fff))
-
-	if((A==1)&&(B==1)){
-		warning("Your dataset contains some non-replicated sample. \"replicates\" parameter is automatically selected as \"no\".\n")
-		out <- NOISeq::noiseq(input, k = e2$k, norm = e2$norm, 
-    	replicates = "no", factor = e2$factor, 
-    	conditions = e2$conditions, pnr = e2$pnr, nss = e2$nss, v = e2$v, lc = e2$lc)
-	}else{
-	out <- NOISeq::noiseq(input, k = e2$k, norm = e2$norm, 
-    replicates = e2$replicates, factor = e2$factor, 
-    conditions = e2$conditions, pnr = e2$pnr, nss = e2$nss, v = e2$v, lc = e2$lc)
-	}
-	return(out)
-
-	# Unload
-	assignInNamespace("probdeg", original.probdeg, ns="NOISeq", envir=env)
-	assignInNamespace("MD", original.MD, ns="NOISeq", envir=env)
-}
-
-############################################################################################
-
-meta.oneside.noiseq <- function(input, k = 0.5, norm = c("rpkm","uqua","tmm","n"),
-			replicates = c("technical","biological","no"),
-			factor = NULL, conditions = NULL, pnr = 0.2, nss = 5, v = 0.02, lc = 1, studies = NULL, cl = NULL){
-	
-	if (inherits(input, "metaExpressionSet") == FALSE) {
-        stop("Error. You must give an object generated by the meta.readData function or other.oneside.pvalues\n")
-	}
-	if(is.null(studies)){
-		stop("Please specify \"studies\" at first!\n")
-	}
-	else if(!is.vector(factor)){
-		stop("Please \"factor\" parameter as vector.\n")
-	}
-	else if(!is.vector(studies)){
-		stop("Please \"studies\" parameter as vector.\n")
-	}
-	else if(length(factor) != length(studies)){
-		stop("Length of factors and that of studies are different!\n")
-	}else{
-		out <- list()
-		l <- length(input)
-		length(out) <- l
-
-		k2 = 0.5
-		norm2 = c("rpkm", "uqua", "tmm", "n")
-	   	replicates2 = c("technical", "biological", "no")
-	   	conditions2 = NULL
-	   	pnr2 = 0.2
-	   	nss2 = 5
-	   	v2 = 0.02
-	   	lc2 = 1
-
-	   	if(k != 0.5){k2 <- k}
-	   	if(length(norm) != 4){norm2 <- norm}
-	   	if(length(replicates) != 3){replicates2 <- replicates}
-	   	if(!is.null(conditions)){conditions2 <- conditions}
-	   	if(pnr != 0.2){pnr2 <- pnr}
-	   	if(nss != 5){nss2 <- nss}
-	   	if(v != 0.02){v2 <- v}
-	   	if(lc != 1){lc2 <- lc}
-
-	  	e <<- new.env()
-	  	e$input <- input
-		e$factors <- factor
-		e$studies <- studies
-		e$k <- k2
-		e$norm <- norm2
-		e$replicates <- replicates2
-		e$conditions <- conditions2
-		e$pnr <- pnr2
-		e$nss <- nss2
-		e$v <- v2
-		e$lc <- lc2
-
-		loc <- list()
-		length(loc) <- l
-		e$loc <- loc	
-		for(x in 1:l){
-			e$loc[[x]] <- which(levels(as.factor(e$studies))[x] == e$studies)	
-		}
-
-		# Return
-		if(!is.null(cl)){
-			clusterExport(cl, "e")
-			#clusterEvalQ(cl, library("NOISeq"))
-			out <- snow::parSapply(cl, 1:l, function(x){
-					output <- list()
-					length(output) <- 3
-					names(output) <- c("upper", "lower", "weight")
-					result <- metaSeq:::oneside.noiseq(e$input[[x]], k = e$k, norm = e$norm, replicates = e$replicates, factor = "e$factors[e$loc[[x]]]", conditions = e$conditions, pnr = e$pnr, nss = e$nss, v = e$v, lc = e$lc, x = x)
-					U <- result@results[[1]]$prob
-					L <- 1 - result@results[[1]]$prob
-					W <- nrow(input[[x]]@phenoData@data)
-					names(U) <- rownames(input[[x]]@assayData$exprs)
-					names(L) <- rownames(input[[x]]@assayData$exprs)
-					output$upper <- U
-					output$lower <- L
-					output$weight <- W
-					return(output)
-					}
-				   )
-
-			colnames(out) <- paste("Study", 1:l)
-			return(out)	
-		}else{
-			out <- sapply(1:l, function(x){
-					output <- list()
-					length(output) <- 3
-					names(output) <- c("upper", "lower", "weight")
-					result <- metaSeq:::oneside.noiseq(e$input[[x]], k = e$k, norm = e$norm, replicates = e$replicates, factor = "e$factors[e$loc[[x]]]", conditions = e$conditions, pnr = e$pnr, nss = e$nss, v = e$v, lc = e$lc, x = x)
-					U <- result@results[[1]]$prob
-					L <- 1 - result@results[[1]]$prob
-					W <- nrow(input[[x]]@phenoData@data)
-					names(U) <- rownames(input[[x]]@assayData$exprs)
-					names(L) <- rownames(input[[x]]@assayData$exprs)
-					output$upper <- U
-					output$lower <- L
-					output$weight <- W
-					return(output)
-					}
-				   )
-
-			colnames(out) <- paste("Study", 1:l)
-			return(out)	
-		}
-	}
-}
-
-############################################################################################
-
-Fisher.test <- function(pvals, na.mode = "notignore"){
-	l <- ncol(pvals)
-	U <- pvals[1,1][[1]]
-	L <- pvals[2,1][[1]]
-	weight <- unlist(pvals["weight",])
-
-	for(i in 2:l){
-		U <- cbind(U, pvals[1,i][[1]])
-		L <- cbind(L, pvals[2,i][[1]])
-	}
-
-	up <- c()
-	low <- c()
-
-	if(na.mode == "notignore"){
-		up <- apply(U, 1, each.Fisher.test)
-		low <- apply(L, 1, each.Fisher.test)
-	}
-	if(na.mode == "ignore"){
-		up <- apply(U, 1, each.Fisher.ignore.test)
-		low <- apply(L, 1, each.Fisher.ignore.test)
-	}else{
-		warnings("You have to specify na.mode as \"ignore\" or \"notignore\"")
-	}
-	list("Upper" = up, "Lower" = low, "Weight" = weight)
-}
-
-############################################################################################
-
-each.Fisher.test <- function(p) {
-  Xsq <- -2*sum(log(p))
-  pval <- 1-pchisq(Xsq, df = 2*length(p))
-  return(pval)
-}
-
-############################################################################################
-
-each.Fisher.ignore.test <- function(p) {
-  loc <- setdiff(1:length(p), which(is.na(p)))
-  if(length(loc) >= 1){
-	  p <- p[loc]
-  	Xsq <- -2*sum(log(p))
-  	pval <- 1-pchisq(Xsq, df = 2*length(p))
-  	return(pval)
-  }else{
-  	return(NA)
-  }
-}
-
-############################################################################################
-
-Stouffer.test <- function(pvals, na.mode = "notignore"){
-
-	if(is.null(pvals["weight",][[1]])){
-		stop("Weight is needed for Stouffer's method!\n")
-	}else{
-		l <- ncol(pvals)
-		U <- pvals[1,1][[1]]
-		L <- pvals[2,1][[1]]
-		weight <- unlist(pvals["weight",])
-
-		for(i in 2:l){
-			U <- cbind(U, pvals[1,i][[1]])
-			L <- cbind(L, pvals[2,i][[1]])
-		}
-
-		up <- c()
-		low <- c()
-
-		if(na.mode == "notignore"){
-			up <- apply(U, 1, each.Stouffer.test, w=weight)
-			low <- apply(L, 1, each.Stouffer.test, w=weight)
-		}
-		else if(na.mode == "ignore"){
-			up <- apply(U, 1, each.Stouffer.ignore.test, w=weight)
-			low <- apply(L, 1, each.Stouffer.ignore.test, w=weight)
-		}else{
-			warnings("You have to specify na.mode as \"ignore\" or \"notignore\"")
-		}
-		list("Upper" = up, "Lower" = low, "Weight" = weight)
-	}
-}
-
-############################################################################################
-
-each.Stouffer.test <- function(p, w) {
-  if (missing(w)) {
-    w <- rep(1, length(p))/length(p)
-  } else {
-    if (length(w) != length(p))
-      stop("Length of p and w must equal!")
-  }
-  Zi <- qnorm(1-p) 
-  Z  <- sum(w*Zi)/sqrt(sum(w^2))
-  pval <- 1-pnorm(Z)
-  return(pval)
-}
-
-############################################################################################
-
-each.Stouffer.ignore.test <- function(p, w) {
-  if (missing(w)) {
-    w <- rep(1, length(p))/length(p)
-  } else {
-    if (length(w) != length(p))
-      stop("Length of p and w must equal!")
-  }
-
-  loc <- setdiff(1:length(p), which(is.na(p)))
-  if(length(loc) >= 1){
-	p <- p[loc]
-	w <- w[loc]
-	Zi <- qnorm(1-p) 
-  	Z  <- sum(w*Zi)/sqrt(sum(w^2))
-  	pval <- 1-pnorm(Z)
-  	return(pval)
-  }else{
-  	return(NA)
-  }
-}
-
-############################################################################################
-
-other.oneside.pvalues <- function (Upper, Lower, weight = NULL) 
+##############################
+###### Object definition #####
+##############################
+
+#######################################################
+####### グラム行列を出力するように改造したDiffusionMap ######
+######### 正規化を外したほうがうまくいく可能性あり ###########
+#######################################################
+custom.DiffusionMap <- function(data, sigma = NULL, k = find.dm.k(nrow(data) - 1L),
+    n.eigs = min(20L, nrow(data) - 2L), density.norm = TRUE,
+    ..., distance = c("euclidean", "cosine"), censor.val = NULL,
+    censor.range = NULL, missing.range = NULL, vars = NULL, verbose = !is.null(censor.range),
+    .debug.env = NULL)
 {
-    if ((min(!is.na(Upper)) < 0) || (max(!is.na(Upper)) > 1)) {
-        stop("Is this dataset (upper) pvalues? Some elements exceed 0 - 1 range. Please confirm first.\n")
+    distance <- match.arg(distance)
+    data.env <- new.env(parent = .GlobalEnv)
+    data.env$data <- data
+    # パッケージ名を指定
+    data <- destiny:::extract.doublematrix(data, vars)
+    imputed.data <- data
+    if (any(is.na(imputed.data)))
+        imputed.data <- as.matrix(hotdeck(data, imp_var = FALSE))
+    n <- nrow(imputed.data)
+    if (n <= n.eigs + 1L)
+        stop(sprintf("Eigen decomposition not possible if n ≤ n.eigs+1 (And %s ≤ %s)",
+            n, n.eigs + 1L))
+    if (is.null(k) || is.na(k))
+        k <- n - 1L
+    if (k >= nrow(imputed.data))
+        stop(sprintf("k has to be < nrow(data) (And %s ≥ nrow(data))",
+            k))
+    # パッケージ名を指定
+    censor <- destiny:::test.censoring(censor.val, censor.range, data,
+        missing.range)
+    if (identical(distance, "cosine") && censor)
+        stop("cosine distance only valid without censoring model")
+    sigmas <- sigma
+    if (is.null(sigmas)) {
+        sigmas <- find.sigmas(imputed.data, censor.val = censor.val,
+            censor.range = censor.range, missing.range = missing.range,
+            vars = vars, verbose = verbose)
     }
-    if ((min(!is.na(Lower)) < 0) || (max(!is.na(Lower)) > 1)) {
-        stop("Is this dataset (lower) pvalues? Some elements exceed 0 - 1 range. Please confirm first.\n")
+    else if (!is(sigmas, "Sigmas")) {
+        sigmas <- new("Sigmas", log.sigmas = NULL, dim.norms = NULL,
+            optimal.sigma = sigma, optimal.idx = NULL, avrd.norms = NULL)
     }
-    if (nrow(Upper) != nrow(Lower)) {
-        stop("Number of rows in upper p-values and lower p-values are different!\n")
+    sigma <- optimal.sigma(sigmas)
+    if (verbose) {
+        cat("finding knns...")
+        tic <- proc.time()
     }
-    if (ncol(Upper) != ncol(Lower)) {
-        stop("Number of columns in upper p-values and lower p-values are different!\n")
+    # パッケージ名を指定
+    # kd_tree, cover_tree, CR, brute
+    knn <- FNN:::get.knn(imputed.data, k, algorithm = "kd_tree") # <-
+    if (verbose) {
+        cat("...done. Time:\n")
+        print(proc.time() - tic)
     }
-    if ((!is.null(weight)) && (ncol(Upper) != length(weight))) {
-        A <- ncol(Upper)
-        B <- length(weight)
-        Call <- paste0("Number of column in p-value matrix is ", 
-            A, " but length of weight vector is ", B, ". Please confirm first.\n")
-        stop(Call)
+    cb <- invisible
+    if (verbose) {
+        pb <- txtProgressBar(1, n, style = 3)
+        cb <- function(i) setTxtProgressBar(pb, i)
+        cat("Calculating transition probabilities...\n")
+        tic <- proc.time()
     }
-    l <- ncol(Upper)
-    out <- sapply(1:l, function(x) {
-        output <- list()
-        length(output) <- 3
-        names(output) <- c("upper", "lower", "weight")
-		U <- Upper[, x]
-		L <- Lower[, x]
-		names(U) <- rownames(Upper)
-		names(L) <- rownames(Lower)
-		output$upper <- U
-		output$lower <- L
-		output$weight <- weight[x]
-		return(output)
-    })
-    colnames(out) <- paste("Exp", 1:l)
-    return(out)
+    if (censor) {
+        trans.p <- censoring(data, censor.val, censor.range,
+            missing.range, sigma, knn$nn.index, cb)
+    }
+    else {
+        # パッケージ名を指定
+        d2 <- switch(distance, euclidean = destiny:::d2_no_censor(knn$nn.index,
+            knn$nn.dist, cb), cosine = icos2_no_censor(knn$nn.index,
+            imputed.data, cb))
+        # パッケージ名を指定
+        trans.p <- Matrix:::sparseMatrix(d2@i, p = d2@p, x = exp(-d2@x/(2 *
+            sigma^2)), dims = dim(d2), index1 = FALSE)
+        rm(d2)
+    }
+    if (verbose) {
+        close(pb)
+        cat("...done. Time:\n")
+        print(proc.time() - tic)
+    }
+    rm(knn)
+    diag(trans.p) <- 0
+    # パッケージ名を指定
+    trans.p <- Matrix:::drop0(trans.p)
+    trans.p <- Matrix:::symmpart(trans.p)
+    # apply
+    d <- apply(trans.p, 1, sum)
+
+    max.dist <- max(trans.p@x, na.rm = TRUE)
+
+    # パッケージ名を指定
+    destiny:::stopifsmall(max.dist)
+    if (density.norm) {
+        trans.p <- as(trans.p, "dgTMatrix")
+        # パッケージ名を指定
+        H <- Matrix:::sparseMatrix(trans.p@i, trans.p@j, x = trans.p@x/(d[trans.p@i +
+            1] * d[trans.p@j + 1]), dims = dim(trans.p), index1 = FALSE)
+    }
+    else {
+        H <- trans.p
+    }
+    rm(trans.p)
+    # パッケージ名を指定、apply
+    D.rot <- Matrix:::Diagonal(x = apply(H, 1, sum)^-0.5)
+    M <- D.rot %*% H %*% D.rot
+    rm(H)
+    if (!is.null(.debug.env)) {
+        assign("M", M, .debug.env)
+        assign("D.rot", D.rot, .debug.env)
+    }
+    if (verbose) {
+        cat("performing eigen decomposition...")
+        tic <- proc.time()
+    }
+    # パッケージ名を指定
+    eig.M <- destiny:::eig.decomp(M, n, n.eigs, TRUE)
+    if (verbose) {
+        cat("...done. Time:\n")
+        print(proc.time() - tic)
+    }
+    # as.matrixを加えた
+    eig.vec <- as.matrix(t(t(eig.M$vectors) %*% as.matrix(D.rot)))
+    colnames(eig.vec) <- paste0("DC", seq(0, n.eigs))
+    # クラスの仕様の確認が働いてめんどくさいから、リストで返すようにした
+    list(eigenvalues = eig.M$values[-1], eigenvectors = eig.vec[,
+        -1], sigmas = sigmas, data.env = data.env, eigenvec0 = eig.vec[,
+        1], d = d, k = k, density.norm = density.norm, distance = distance,
+        censor.val = censor.val, censor.range = censor.range,
+        missing.range = missing.range, M = M)
 }
 
-############################################################################################
 
 
-# Objects list
+
+###########################################################
+################# カテゴリカルなカーネル関数 ##################
+###########################################################
+CatKernel <- function(label, type=c("two", "one_vs_rest", "each", "simple")){
+    # データ数
+    N <- length(label)
+
+    # 各クラスの集計
+    tl <- table(label)
+
+    # 集計値ベクトル
+    sum.label <- sapply(label, function(x){tl[which(labels(tl)$label == x)]})
+
+    # any-class
+    if(type == "simple"){
+        ######## 化合物-タンパク質 より #########
+        sapply(label, function(x){
+                out <- rep(0, length=length(label))
+                # 同じクラスなら（C_i == C_j） 1 / m_i
+                out[which(x == label)] <- 1
+
+                # 違うクラスなら（C_i != C_j） 1 / (m_i - N)
+                out[which(x != label)] <- -1
+                out
+            })
+        #####################################
+    }else{
+        # 2-class
+        if(length(tl) == 2){
+            if((type=="two")){
+                ########### Equation (9) ############
+                sapply(label, function(x){
+                        out <- rep(0, length=length(label))
+                        # 同じクラスなら 1/m_+ - 1/m
+                        out[which(x == label)] <- 1 / tl[which(labels(tl)$label == x)] - 1 / N
+                        # 違うクラスなら - 1/m
+                        out[which(x != label)] <- - 1 / N
+                        out
+                    })
+                #####################################
+            }else{
+                warning("Wrong type paramter!")
+            }
+        }
+        # multi-class
+        else if(length(tl) > 2){
+            if(type == "one_vs_rest"){
+                ########### Equation (11) ###########
+                sapply(label, function(x){
+                        out <- rep(0, length=length(label))
+                        # 同じクラスなら（C_i == C_j） 1 / m_i
+                        out[which(x == label)] <- 1 / tl[which(labels(tl)$label == x)]
+
+                        # 違うクラスなら（C_i != C_j） 1 / (m_i - N)
+                        out[which(x != label)] <- 1 / (sum.label[which(x != label)] - N)
+                        out
+                    })
+                #####################################
+            }else if(type == "each"){
+                ########### Equation (12) ###########
+                sapply(label, function(x){
+                        out <- rep(0, length=length(label))
+                        # 同じクラスなら（C_i == C_j） 1 / m_i
+                        out[which(x == label)] <- 1 / sqrt(tl[which(labels(tl)$label == x)])
+
+                        # 違うクラスなら（C_i != C_j） 1 / (m_i - N)
+                        out[which(x != label)] <- 0
+                        out
+                    })
+                #####################################
+            }else{
+                warning("Wrong type parameter!")
+            }
+        }else{
+            warning("Confirm your label vector!")
+        }
+    }
+}
+
+
+
+
+###########################################################
+### ヒルベルト-シュミット独立性基準（K行列とL行列の独立性の指標）####
+###########################################################
+HSIC <- function(K, L, p.value=FALSE){
+    if(!all(c(dim(K), dim(L)) == dim(K)[1])){
+        stop("Inappropriate matrices are specified!\nPlease confirm the number of rows and columns.")
+    }
+
+    N <- dim(K)[1]
+    H <- matrix(rep(-1/N), nrow=N, ncol=N)
+    diag(H) <- 1 - 1/N
+    K <- as.matrix(K)
+    L <- as.matrix(L)
+    # The value of HSIC
+    hsic.value <- sum(diag(K %*% H %*% L %*% H)) / (N-1)^2
+
+    # 例外処理1
+    if(hsic.value < 0){
+        hsic.value <- 0
+    }
+
+    # Pvalue of HSIC
+    if(p.value){
+        # HSICの期待値
+        u_x2 <- 1/(N*(N-1)) * sum(K[upper.tri(K)])
+        u_y2 <- 1/(N*(N-1)) * sum(L[upper.tri(L)])
+        E_HSIC <- 1 / N * (1 + u_x2 * u_y2 - u_x2 - u_y2)
+
+        # HSICの分散
+        H <- matrix(rep(-1/N), nrow=N, ncol=N)
+        diag(H) <- 1 - 1/N
+        B <- H %*% K %*% H * H %*% L %*% H
+        B <- B * B
+        var_HSIC <- sum(2*(N-4)*(N-5)/(N*(N-1)*(N-2)*(N-3)) * t(rep(1, length=N)) %*% (B-diag(B)))
+
+        # 例外処理2
+        if(E_HSIC <= 0){
+            E_HSIC <- 0.0001
+        }
+        if(var_HSIC <= 0){
+            var_HSIC <- 0.0001
+        }
+        # Shape parameter（ > 0）
+        Alpha <- E_HSIC^2 / var_HSIC
+        # Scale paramter（ > 0）
+        Beta <- N * var_HSIC / E_HSIC
+        # この値がガンマ分布に従う（ > 0）
+        x <- N * hsic.value
+
+        # p値
+        p_HSIC <- pgamma(x, shape=Alpha, scale=Beta, lower.tail=FALSE)
+    }else{
+        p_HSIC <- NA
+    }
+    # return
+    list(HSIC=hsic.value, Pval=p_HSIC)
+}
+
+
+
+
+###########################################################
+############# FUCHIKOMA : HSICを利用した特徴量抽出 ###########
+###########################################################
+FUCHIKOMA <- function(data, mode=c("Supervised", "Unsupervised"), Comp=FALSE, label=FALSE, cat.type=FALSE, n.eigs=10, algorithm=c("brute", "song"), per.rej=10, threshold=0.01){
+
+    # 並列化準備
+    registerDoParallel(detectCores())
+
+    ############ ラベル側のグラム行列（一回のみ） ##############
+    if((mode == "Supervised") && (is.vector(label))){
+        L <- CatKernel(label, type=cat.type)
+    }else if(mode == "Unsupervised"){
+        if(is.vector(Comp)){
+            EigenVecs <- custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), n.eigs=n.eigs)$eigenvectors[, Comp]
+            L <- EigenVecs %*% t(EigenVecs)
+        }else{
+            warning("Specify Comp!")
+        }
+    }else{
+        warning("Wrong mode!")
+    }
+    ############ ラベル側のグラム行列（終わり）#################
+
+        # HSIC値の格納先
+        HSICs <- 0
+        # 削除した遺伝子の場所
+        RejPosition <- c()
+
+        ##️############### BAHSICの計算ステップ ################
+        while(length(SurvPosition) > 5){
+            #️ このステップで見る遺伝子（生き残り）
+            SurvPosition <- setdiff(1:nrow(data), RejPosition)
+            cat(paste0("### No. of remaining gene is ", length(SurvPosition), " ###\n"))
+
+            # 共通で使うsigmaの計算
+            sigma =  try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data[SurvPosition,]))), verbose = FALSE)), silent = TRUE)
+
+            # 生き残り遺伝子内でのHSIC計算
+            tmp_HSICs <- foreach(j = 1:length(SurvPosition), .export=c("SurvPosition", "custom.DiffusionMap", "n.eigs", "HSIC", "data", "L", "sigma"), .combine = "c") %dopar% {
+                # データ側のグラム行列
+                dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), j)],]))), n.eigs=n.eigs, sigma=sigma))
+                if ('try-error' %in% class(dif)){
+                    return(0)
+                }else{
+                    K <- dif$M
+                    # HSICを計算
+                    tmp_HSIC <- HSIC(K, L)$HSIC
+                    return(ifelse(is.nan(tmp_HSIC), 0, tmp_HSIC))
+                }
+            }
+            names(tmp_HSICs) <- rownames(data)[SurvPosition]
+
+            ############### 各ステップでの最後の処理 #############
+            if(algorithm == "brute"){
+                # 今回一番HSICが大きくなった遺伝子
+                NoRej <- 1
+            }else if(algorithm == "song"){
+                # 今回一番HSICが大きくなった遺伝子
+                NoRej <- round(N * per.rej / 100)
+            }else{
+                stop("algorithm parameter is wrong!")
+            }
+
+            # 今回HSICが最大な上位n個の遺伝子
+            tmp_MaxHSICs <- rev(sort(tmp_HSICs))[1:NoRej]
+
+            # HSICsがこれまでのHSICsの最大値よりも小さくなったら打ち切り
+            if(max(HSICs) - max(tmp_MaxHSIC) < threshold){
+                # BAHSICの最大値を格納
+                HSICs <- c(HSICs, tmp_MaxHSICs)
+                # 削除した遺伝子を登録
+                RejPosition <- c(RejPosition, unlist(sapply(names(tmp_MaxHSICs), function(x){which(x == rownames(data))})))
+            ########### 各ステップでの最後の処理（終わり）##########
+            }else{
+                break
+            }
+        }
+        ##️############ BAHSICの計算ステップ（終わり） #############
+
+        # HSICs整形
+        HSICs <- HSICs[setdiff(2:length(HSICs), which(is.na(HSICs)))]
+
+        # 一番HSICが大きかった遺伝子以降 => DEGs
+        DEGs <- HSICs[which(max(HSICs) == HSICs):length(HSICs)]
+
+        # non-DEGs
+        nonDEGs <- HSICs[1:(which(max(HSICs) == HSICs) - 1)]
+
+        # 最後に残った遺伝子でp値を算出（Pval用）
+        pval_HSICs <- foreach(j = 1:length(DEGs), .export=c("DEGs", "HSICs", "custom.DiffusionMap", "n.eigs", "HSIC", "data", "L", "sigma"), .combine = "c") %dopar% {
+            # データ側のグラム行列
+            dif <- try(
+                custom.DiffusionMap(
+                    as.ExpressionSet(
+                        as.data.frame(
+                            t(
+                                data[
+                                names(setdiff(HSICs, DEGs)),
+                                ]
+                                )
+                            )
+                        )
+                    , n.eigs=n.eigs, sigma=sigma
+                    )
+                )
+            if ('try-error' %in% class(dif)){
+                return(0)
+            }else{
+                K <- dif$M
+                # HSICのp値を計算
+                HSIC(K, L, p.value=TRUE)$Pval
+            }
+        }
+
+        # 結果を出力
+        list(
+            DEGs.HSICs = DEGs,
+            DEGs.Pvals = pval_HSICs,
+            All.HSICs = HSICs,
+            Rej.order = rank(nonDEGs)
+        )
+}
+
+##############################
+######## Objects list ########
+##############################
 objectslist <- c(
-	"BreastCancer",
-	"pvals",
-	"StudyA",
-	"Result.Meta",
-	"meta.readData",
-	"original.probdeg",
-	"original.MD",
-	"custom.probdeg",
-	"custom.MD",
-	"oneside.noiseq",
-	"meta.oneside.noiseq",
-	"Fisher.test",
-	"each.Fisher.test",
-	"each.Fisher.ignore.test",
-	"Stouffer.test",
-	"each.Stouffer.test",
-	"each.Stouffer.ignore.test",
-	"other.oneside.pvalues",
-	# 2013/11/16 追加分	
-	"original.n.menor",
-	"original.busca",
-	# "text.n.menor",
-	# "text.busca",
-	"Accelerate.NOISeq",
-	"Reset.Accelerate.NOISeq",
-	# 2013/12/2 追加分	
-	"text.n.menor_unix",
-	"text.busca_unix",
-	"text.n.menor_win",
-	"text.busca_win"
+	"custom.DiffusionMap",
+	"CatKernel",
+	"HSIC",
+	"FUCHIKOMA"
 )
 
-# Packaging
-package.skeleton(name = "metaSeq", objectslist, path = ".")
+##############################
+########## Packaging #########
+##############################
+package.skeleton(name = "FUCHIKOMA", objectslist, path = ".")

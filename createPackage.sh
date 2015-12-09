@@ -3,44 +3,42 @@
 rm -rf FUCHIKOMA
 R CMD BATCH createPackage.R log.txt
 
-# ##### Editing ######
-# echo "import (NOISeq)
-# import (snow)
-# import (Rcpp)
+##### Editing ######
+echo "import (destiny)
+import (foreach)
+import (doParallel)
 
-# export(
-# 	meta.readData,
-# 	meta.oneside.noiseq,
-# 	Fisher.test,
-# 	Stouffer.test,
-# 	other.oneside.pvalues,
-# 	Accelerate.NOISeq,
-# 	Reset.Accelerate.NOISeq
-# )" > ./FUCHIKOMA/NAMESPACE
+export(
+	custom.DiffusionMap,
+	CatKernel,
+	HSIC,
+	FUCHIKOMA
+)" > ./FUCHIKOMA/NAMESPACE
 
 rm ./FUCHIKOMA/Read-and-delete-me
 
 ##### Data #####
-cp ????.Rdata FUCHIKOMA/data
+cp MARS.Rdata FUCHIKOMA/data
 
 ##### DESCRIPTION #####
 cp DESCRIPTION FUCHIKOMA
 
-##### vignettes #####
-mkdir ./FUCHIKOMA/vignettes
+##### NEWS #####
 mkdir ./FUCHIKOMA/inst
-mkdir ./FUCHIKOMA/inst/doc
-cp ./vignettes/FUCHIKOMA.pdf ./FUCHIKOMA/inst/doc
-cp ./vignettes/FUCHIKOMA.Rnw ./FUCHIKOMA/inst/doc
-# cp ./vignettes/Fig1.jpeg ./FUCHIKOMA/inst/doc
-# cp ./vignettes/Fig2.png ./FUCHIKOMA/inst/doc
+cp NEWS ./FUCHIKOMA/inst
 
-cp ./vignettes/FUCHIKOMA.Rnw ./FUCHIKOMA/vignettes
-# cp ./vignettes/Fig1.jpeg ./FUCHIKOMA/vignettes
-# cp ./vignettes/Fig2.png ./FUCHIKOMA/vignettes
+# ##### vignettes #####
+# mkdir ./FUCHIKOMA/vignettes
+# mkdir ./FUCHIKOMA/inst/doc
 
-##### テストコード #####
-cp -rf tests/ ./FUCHIKOMA/inst
+# cp ./vignettes/FUCHIKOMA.pdf ./FUCHIKOMA/inst/doc
+# cp ./vignettes/FUCHIKOMA.Rnw ./FUCHIKOMA/inst/doc
+
+# cp ./vignettes/FUCHIKOMA.pdf ./FUCHIKOMA/vignettes
+# cp ./vignettes/FUCHIKOMA.Rnw ./FUCHIKOMA/vignettes
+
+# ##### テストコード #####
+# cp -rf tests/ ./FUCHIKOMA
 
 ##### マニュアル #####
 rm -rf ./FUCHIKOMA/man
@@ -50,6 +48,6 @@ cp -rf man/ ./FUCHIKOMA/man
 
 R CMD BUILD --resave-data FUCHIKOMA
 R CMD INSTALL FUCHIKOMA_0.0.1.tar.gz
-# R CMD CHECK FUCHIKOMA_0.0.1.tar.gz
+R CMD CHECK FUCHIKOMA_0.0.1.tar.gz
 
 rm log.txt

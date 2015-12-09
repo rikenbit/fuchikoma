@@ -1,0 +1,12 @@
+CatKernel               Categorical Kernel function
+FUCHIKOMA               Detection of Differentially Expressed Genes in
+                        one of multiple clusters using BAHSIC and
+                        Diffusion Map
+FUCHIKOMA-package       Detection of Differentially Expressed Genes in
+                        one of multiple clusters using BAHSIC and
+                        Diffusion Map
+HSIC                    Hilbert-Schmidt Independence Criteria (HSIC)
+MARS                    Count data of MARS-Seq containing four
+                        different cell types.
+custom.DiffusionMap     Customized Diffusion Map of destiny for
+                        extracting Gram Matrix
