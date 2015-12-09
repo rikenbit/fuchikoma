@@ -25,9 +25,10 @@ FUCHIKOMA(data, mode = c("Supervised", "Unsupervised"), Comp = FALSE, label = FA
 }
 }
 \value{
-\item{DEGs.HSICs}{Differentially expressed genes and HSIC values}
-\item{DEGs.Pvals}{Pvalues of HSICs}
+\item{DEGs.HSICs}{Differentially expressed genes (DEGs) and HSIC values}
+\item{DEGs.Pvals}{Pvalues of DEGs}
 \item{All.HSICs}{HSICs value of all genes}
+\item{All.Pvals}{Pvalues of all genes}
 \item{Rej.order}{The order of rejecting of genes in each iteration step}
 }
 \references{

@@ -21,6 +21,7 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
         warning("Wrong mode!")
     }
     HSICs <- 0
+    All.pval <- 0
     RejPosition <- c()
     SurvPosition <- 1:nrow(data)
     while (length(SurvPosition) > 5) {
@@ -32,26 +33,33 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
             cat(paste0("Error in destiny::optimal.sigma !!\n"))
             break
         }
-        tmp_HSICs <- foreach(j = 1:length(SurvPosition), .export = c("SurvPosition", 
-            "custom.DiffusionMap", "n.eigs", "HSIC", "data", 
-            "L", "sigma"), .combine = "c") %dopar% {
-            dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), 
-                j)], ]))), n.eigs = n.eigs, sigma = sigma))
-            if ("try-error" %in% class(dif)) {
-                return(0)
+        tmp_HSICs_Pvals <- foreach(j = 1:length(SurvPosition), 
+            .export = c("SurvPosition", "custom.DiffusionMap", 
+                "n.eigs", "HSIC", "data", "L", "sigma")) %dopar% 
+            {
+                dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), 
+                  j)], ]))), n.eigs = n.eigs, sigma = sigma))
+                if ("try-error" %in% class(dif)) {
+                  return(NA)
+                }
+                else {
+                  K <- dif$M
+                  HSIC(K, L, p.value = TRUE)
+                }
             }
-            else {
-                K <- dif$M
-                tmp_HSIC <- HSIC(K, L)$HSIC
-                return(ifelse(is.nan(tmp_HSIC), 0, tmp_HSIC))
-            }
-        }
+        tmp_HSICs <- unlist(lapply(tmp_HSICs_Pvals, function(x) {
+            x$HSIC
+        }))
+        tmp_Pvals <- unlist(lapply(tmp_HSICs_Pvals, function(x) {
+            x$Pval
+        }))
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
+        names(tmp_Pvals) <- rownames(data)[SurvPosition]
         if (algorithm == "brute") {
             NoRej <- 1
         }
         else if (algorithm == "song") {
-            NoRej <- round(nrow(data) * per.rej/100)
+            NoRej <- round(length(SurvPosition) * per.rej/100)
         }
         else {
             stop("algorithm parameter is wrong!")
@@ -59,6 +67,7 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
         tmp_MaxHSICs <- rev(sort(tmp_HSICs))[1:NoRej]
         if (max(HSICs) - max(tmp_MaxHSICs) < threshold) {
             HSICs <- c(HSICs, tmp_MaxHSICs)
+            All.pval <- c(All.pval, tmp_Pvals[names(tmp_MaxHSICs)])
             RejPosition <- c(RejPosition, unlist(sapply(names(tmp_MaxHSICs), 
                 function(x) {
                   which(x == rownames(data))
@@ -70,21 +79,9 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
         }
     }
     HSICs <- HSICs[setdiff(2:length(HSICs), which(is.na(HSICs)))]
+    All.pval <- All.pval[setdiff(2:length(All.pval), which(is.na(All.pval)))]
     DEGs <- HSICs[which(max(HSICs) == HSICs):length(HSICs)]
     nonDEGs <- HSICs[1:(which(max(HSICs) == HSICs) - 1)]
-    pval_HSICs <- foreach(j = 1:length(DEGs), .export = c("DEGs", 
-        "HSICs", "custom.DiffusionMap", "n.eigs", "HSIC", "data", 
-        "L", "sigma"), .combine = "c") %dopar% {
-        dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[names(setdiff(HSICs, 
-            DEGs)), ]))), n.eigs = n.eigs, sigma = sigma))
-        if ("try-error" %in% class(dif)) {
-            return(0)
-        }
-        else {
-            K <- dif$M
-            HSIC(K, L, p.value = TRUE)$Pval
-        }
-    }
-    list(DEGs.HSICs = DEGs, DEGs.Pvals = pval_HSICs, All.HSICs = HSICs, 
-        Rej.order = rank(nonDEGs))
+    list(DEGs.HSICs = DEGs, DEGs.Pvals = All.pval[names(DEGs)], 
+        All.HSICs = HSICs, All.Pvals = All.pval, Rej.order = sort(rank(nonDEGs)))
 }

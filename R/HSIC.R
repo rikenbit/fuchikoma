@@ -2,7 +2,7 @@ HSIC <-
 function (K, L, p.value = FALSE) 
 {
     if (!all(c(dim(K), dim(L)) == dim(K)[1])) {
-        stop("Inappropriate matrices are specified!\nPlease confirm the number of rows and columns.")
+        stop("\nInappropriate matrices are specified!\nPlease confirm the number of rows and columns.")
     }
     N <- dim(K)[1]
     H <- matrix(rep(-1/N), nrow = N, ncol = N)
