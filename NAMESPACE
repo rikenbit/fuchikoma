@@ -1,0 +1,13 @@
+import(destiny)
+import(foreach)
+import(doParallel)
+import(FNN)
+import(Matrix)
+
+export(
+	custom.DiffusionMap,
+	CatKernel,
+	HSIC,
+	FUCHIKOMA
+)
+

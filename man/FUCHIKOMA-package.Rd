@@ -1,6 +1,5 @@
 \name{FUCHIKOMA-package}
 \alias{FUCHIKOMA-package}
-\alias{FUCHIKOMA}
 \docType{package}
 \title{
 \packageTitle{FUCHIKOMA}

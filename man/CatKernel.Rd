@@ -8,7 +8,7 @@ Categorical Kernel function
 CatKernel calculate gram matrix by using label information (e.g., cell label or sample label such as c(1,1,1,2,2,2,3,3)).
 }
 \usage{
-CatKernel(label, type = c("two", "one_vs_rest", "each", "simple"))
+CatKernel(label, type = c("simple", "two", "one_vs_rest", "each"))
 }
 \arguments{
   \item{label}{
@@ -32,7 +32,7 @@ Y-h Taguchi et al. (2015) Principal component analysis-based unsupervised featur
 Maintainer: \packageMaintainer{FUCHIKOMA}
 }
 \examples{
-data(MARS)
+data(label.MARS)
 L <- CatKernel(label.MARS, type="one_vs_rest")
 dim(L)
 }

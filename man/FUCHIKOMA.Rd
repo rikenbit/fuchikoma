@@ -8,7 +8,7 @@
 \packageDESCRIPTION{FUCHIKOMA}
 }
 \usage{
-FUCHIKOMA(data, mode = c("Supervised", "Unsupervised"), Comp = FALSE, label = FALSE, cat.type = FALSE, n.eigs = 10, algorithm = c("brute", "song"), per.rej = 10, threshold = 0.01)
+FUCHIKOMA(data, mode = c("Supervised", "Unsupervised"), Comp = FALSE, label = FALSE, cat.type = FALSE, n.eigs = 10, algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -48,5 +48,6 @@ Maintainer: \packageMaintainer{FUCHIKOMA}
 }
 \examples{
 data(MARS)
-res <- FUCHIKOMA(data=MARS, mode="Supervised", label=label.MARS, type="one_vs_rest", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01)
+data(label.MARS)
+res <- FUCHIKOMA(data=MARS, mode="Supervised", label=label.MARS, cat.type="one_vs_rest", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01)
 }

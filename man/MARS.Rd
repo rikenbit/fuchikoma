@@ -5,7 +5,7 @@
 Count data of MARS-Seq containing four different cell types.
 }
 \description{
-A data frame with 10801 rows (genes) with following 228 columns (cells).
+A data frame with 353 rows (genes) with following 228 columns (cells).
 
 The data is downloaded form GEO (GSE54006) and genes having no expression are filted.
 
@@ -27,7 +27,9 @@ Diego Adhemar Jaitin, Ephraim Kenigsberg, Hadas Keren-Shaul, Naama Elefant, Fran
 }
 \examples{
 data(MARS)
-dim(MARS)
+data(label.MARS)
+data(result.pca.MARS)
+data(result.destiny.MARS)
 pairs(result.pca.MARS$rotation[,1:10], col=label.MARS, main="MARS-Seq (PCA)")
 pairs(result.destiny.MARS@eigenvectors[,1:10], col=label.MARS, main="MARS-Seq (Diffusion Map)")
 }

@@ -35,5 +35,5 @@ Maintainer: \packageMaintainer{FUCHIKOMA}
 \examples{
 K <- matrix(runif(100), nrow=10)
 L <- matrix(runif(100), nrow=10)
-HSIC(K, L, p.value)
+HSIC(K, L, p.value=TRUE)
 }
