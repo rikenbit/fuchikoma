@@ -1,8 +1,8 @@
 Package: FUCHIKOMA
 Type: Package
 Title: Detection of Differentially Expressed Genes in one of multiple clusters using BAHSIC and Diffusion Map
-Version: 0.0.1
-Date: 2015-12-3
+Version: 0.0.2
+Date: 2015-12-9
 Author: Koki Tsuyuzaki, Haruka Ozaki, Mika Yoshimura, Itoshi Nikaido
 Maintainer: Koki Tsuyuzaki <k.t.the-answer@hotmail.co.jp>
 Depends: R (>= 2.5.0), destiny, doParallel, foreach, FNN, Matrix

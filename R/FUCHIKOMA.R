@@ -28,11 +28,15 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
             " ###\n"))
         sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data[SurvPosition, 
             ]))), verbose = FALSE)), silent = TRUE)
+        if ("try-error" %in% class(sigma)) {
+            cat(paste0("Error in destiny::optimal.sigma !!\n"))
+            break
+        }
         tmp_HSICs <- foreach(j = 1:length(SurvPosition), .export = c("SurvPosition", 
             "custom.DiffusionMap", "n.eigs", "HSIC", "data", 
             "L", "sigma"), .combine = "c") %dopar% {
             dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), 
-                j)], ]))), n.eigs = n.eigs))
+                j)], ]))), n.eigs = n.eigs, sigma = sigma))
             if ("try-error" %in% class(dif)) {
                 return(0)
             }
