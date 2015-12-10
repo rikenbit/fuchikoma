@@ -1,5 +1,5 @@
 HSIC <-
-function (K, L, p.value = FALSE) 
+function (K, L, type = c("gamma", "permutation"), n.perm = 100) 
 {
     if (!all(c(dim(K), dim(L)) == dim(K)[1])) {
         stop("\nInappropriate matrices are specified!\nPlease confirm the number of rows and columns.")
@@ -9,11 +9,11 @@ function (K, L, p.value = FALSE)
     diag(H) <- 1 - 1/N
     K <- as.matrix(K)
     L <- as.matrix(L)
-    hsic.value <- sum(diag(K %*% H %*% L %*% H))/(N - 1)^2
+    hsic.value <- sum(diag(K %*% H %*% L %*% H))/N^2
     if (hsic.value < 0) {
         hsic.value <- 0
     }
-    if (p.value) {
+    if (type == "gamma") {
         u_x2 <- 1/(N * (N - 1)) * sum(K[upper.tri(K)])
         u_y2 <- 1/(N * (N - 1)) * sum(L[upper.tri(L)])
         E_HSIC <- 1/N * (1 + u_x2 * u_y2 - u_x2 - u_y2)
@@ -25,18 +25,34 @@ function (K, L, p.value = FALSE)
             (N - 2) * (N - 3)) * t(rep(1, length = N)) %*% (B - 
             diag(B)))
         if (E_HSIC <= 0) {
-            E_HSIC <- 1e-04
+            E_HSIC <- 0.1
         }
         if (var_HSIC <= 0) {
-            var_HSIC <- 1e-04
+            var_HSIC <- 0.1
         }
         Alpha <- E_HSIC^2/var_HSIC
         Beta <- N * var_HSIC/E_HSIC
         x <- N * hsic.value
         p_HSIC <- pgamma(x, shape = Alpha, scale = Beta, lower.tail = FALSE)
     }
+    else if (type == "permutation") {
+        HSICs_rand <- foreach(j = 1:n.perm, .export = c("N", 
+            "H", "K", "L"), .combine = "c") %dopar% {
+            rand_order <- sample(1:N, N)
+            L_rand <- L[rand_order, rand_order]
+            hsic.value.rand <- sum(diag(K %*% H %*% L_rand %*% 
+                H))/N^2
+            if (hsic.value.rand < 0) {
+                0
+            }
+            else {
+                hsic.value.rand
+            }
+        }
+        p_HSIC <- length(which(HSICs_rand > hsic.value))/n.perm
+    }
     else {
-        p_HSIC <- NA
+        warning("Wrong type parameter!")
     }
     list(HSIC = hsic.value, Pval = p_HSIC)
 }

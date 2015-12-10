@@ -8,13 +8,14 @@ Hilbert-Schmidt Independence Criteria (HSIC)
 Inner function of FUCHIKOMA. HSIC calculated aginst two gram-matrix means the independence of two kernel spaces. The higher HSIC value is, the more two space are dependent. When p.value set TRUE, p-value of HSIC is also calculated by moment matching to a gamma distribution.
 }
 \usage{
-HSIC(K, L, p.value = FALSE)
+HSIC(K, L, type=c("gamma", "permutation"), n.perm=10000)
 }
 \arguments{
   \item{K}{First gram matrix}
   \item{L}{Second gram matrix}
-  \item{p.value}{When p.value is specified as TRUE, p-value of HSIC is calculated (default:FALSE)}
-}
+  \item{type}{When type is gamma, p-value is calculated under the assumption of gamma distribution. When type is permutation, p-value is calculated by random permutation test}
+  \item{n.perm}{Number of permutation (default:10000)}
+ }
 \value{
 \item{HSIC}{The value of HSIC}
 \item{Pval}{P-value of HSIC. The value is accessible only when p.value is specified as TRUE}
@@ -35,5 +36,5 @@ Maintainer: \packageMaintainer{FUCHIKOMA}
 \examples{
 K <- matrix(runif(100), nrow=10)
 L <- matrix(runif(100), nrow=10)
-HSIC(K, L, p.value=TRUE)
+HSIC(K, L)
 }

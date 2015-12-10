@@ -1,7 +1,7 @@
 FUCHIKOMA <-
 function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE, 
     label = FALSE, cat.type = FALSE, n.eigs = 10, algorithm = c("song", 
-        "brute"), per.rej = 10, threshold = 0.01) 
+        "brute"), per.rej = 10, threshold = 0.01, verbose = FALSE) 
 {
     registerDoParallel(detectCores())
     if ((mode == "Supervised") && (is.vector(label))) {
@@ -24,9 +24,11 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
     All.pval <- 0
     RejPosition <- c()
     SurvPosition <- 1:nrow(data)
-    while (length(SurvPosition) > 5) {
-        cat(paste0("### No. of remaining gene is ", length(SurvPosition), 
-            " ###\n"))
+    while (length(SurvPosition) > 10) {
+        if (verbose) {
+            cat(paste0("### No. of remaining gene is ", length(SurvPosition), 
+                " ###\n"))
+        }
         sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data[SurvPosition, 
             ]))), verbose = FALSE)), silent = TRUE)
         if ("try-error" %in% class(sigma)) {
@@ -44,7 +46,7 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
                 }
                 else {
                   K <- dif$M
-                  HSIC(K, L, p.value = TRUE)
+                  HSIC(K, L)
                 }
             }
         tmp_HSICs <- unlist(lapply(tmp_HSICs_Pvals, function(x) {

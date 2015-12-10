@@ -11,11 +11,15 @@ VERSION 0.99.0
    o Commited to the Bioconductor
 
 
-
+VERSION 0.0.4
+------------------------
+   o
 
 VERSION 0.0.3
 ------------------------
    o P-values against all rejected genes
+   o Sort agaist Rej.order within the result object of FUCHIKOMA
+   o Debug against song mode FUCHIKOMA (number of reject genes)
 
 VERSION 0.0.2
 ------------------------
