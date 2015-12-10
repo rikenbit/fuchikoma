@@ -1,5 +1,6 @@
 HSIC <-
-function (K, L, type = c("gamma", "permutation"), n.perm = 100) 
+function (K, L, shrink = FALSE, type = c("gamma", "permutation"), 
+    n.perm = 100) 
 {
     if (!all(c(dim(K), dim(L)) == dim(K)[1])) {
         stop("\nInappropriate matrices are specified!\nPlease confirm the number of rows and columns.")
@@ -10,6 +11,9 @@ function (K, L, type = c("gamma", "permutation"), n.perm = 100)
     K <- as.matrix(K)
     L <- as.matrix(L)
     hsic.value <- sum(diag(K %*% H %*% L %*% H))/N^2
+    if (shrink) {
+        hsic.value <- .Shrink.HSIC(K, L, H, N, hsic.value)
+    }
     if (hsic.value < 0) {
         hsic.value <- 0
     }
@@ -37,18 +41,23 @@ function (K, L, type = c("gamma", "permutation"), n.perm = 100)
     }
     else if (type == "permutation") {
         HSICs_rand <- foreach(j = 1:n.perm, .export = c("N", 
-            "H", "K", "L"), .combine = "c") %dopar% {
-            rand_order <- sample(1:N, N)
-            L_rand <- L[rand_order, rand_order]
-            hsic.value.rand <- sum(diag(K %*% H %*% L_rand %*% 
-                H))/N^2
-            if (hsic.value.rand < 0) {
-                0
+            "H", "K", "L", "shrink", ".Shrink.HSIC"), .combine = "c") %dopar% 
+            {
+                rand_order <- sample(1:N, N)
+                L_rand <- L[rand_order, rand_order]
+                hsic.value.rand <- sum(diag(K %*% H %*% L_rand %*% 
+                  H))/N^2
+                if (shrink) {
+                  hsic.value.rand <- .Shrink.HSIC(K, L, H, N, 
+                    hsic.value.rand)
+                }
+                if (hsic.value.rand < 0) {
+                  0
+                }
+                else {
+                  hsic.value.rand
+                }
             }
-            else {
-                hsic.value.rand
-            }
-        }
         p_HSIC <- length(which(HSICs_rand > hsic.value))/n.perm
     }
     else {

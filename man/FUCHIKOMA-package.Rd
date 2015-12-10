@@ -30,6 +30,8 @@ Y-h Taguchi et al. (2015) Principal component analysis-based unsupervised featur
 Diego Adhemar Jaitin, Ephraim Kenigsberg, Hadas Keren-Shaul, Naama Elefant, Franziska Paul, Irina Zaretsky, Alexander Mildner, Nadav Cohen, Steffen Jung, Amos Tanay, Ido Amit (2014) Massively Parallel Single-Cell RNA-Seq for Marker-Free Decomposition of Tissues into Cell Types. \emph{Science}, \bold{343 (6172)}: 776-779
 
 Arthur Gretton et al. (2007) A Kernel Statistical Test of Independence, NIPS 21
+
+Aaditya Ramdas et al. (2015) Nonparametric Independence Testing for Small Sample Sizes, IJCAI-15
 }
 \keyword{ package }
 \seealso{

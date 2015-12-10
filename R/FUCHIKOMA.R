@@ -1,7 +1,8 @@
 FUCHIKOMA <-
 function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE, 
-    label = FALSE, cat.type = FALSE, n.eigs = 10, algorithm = c("song", 
-        "brute"), per.rej = 10, threshold = 0.01, verbose = FALSE) 
+    label = FALSE, cat.type = "simple", n.eigs = 10, algorithm = c("song", 
+        "brute"), per.rej = 10, threshold = 0.01, verbose = FALSE, 
+    dropout = 10) 
 {
     registerDoParallel(detectCores())
     if ((mode == "Supervised") && (is.vector(label))) {
@@ -24,7 +25,7 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
     All.pval <- 0
     RejPosition <- c()
     SurvPosition <- 1:nrow(data)
-    while (length(SurvPosition) > 10) {
+    while (length(SurvPosition) > dropout) {
         if (verbose) {
             cat(paste0("### No. of remaining gene is ", length(SurvPosition), 
                 " ###\n"))
@@ -55,6 +56,7 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
         tmp_Pvals <- unlist(lapply(tmp_HSICs_Pvals, function(x) {
             x$Pval
         }))
+        print(tmp_Pvals)
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
         names(tmp_Pvals) <- rownames(data)[SurvPosition]
         if (algorithm == "brute") {
@@ -80,8 +82,13 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
             break
         }
     }
-    HSICs <- HSICs[setdiff(2:length(HSICs), which(is.na(HSICs)))]
-    All.pval <- All.pval[setdiff(2:length(All.pval), which(is.na(All.pval)))]
+    remaining <- names(rev(sort(tmp_HSICs))[(NoRej + 1):length(tmp_HSICs)])
+    tmp_HSICs <- tmp_HSICs[remaining]
+    tmp_Pvals <- tmp_Pvals[remaining]
+    HSICs <- c(HSICs[setdiff(2:length(HSICs), which(is.na(HSICs)))], 
+        tmp_HSICs)
+    All.pval <- c(All.pval[setdiff(2:length(All.pval), which(is.na(All.pval)))], 
+        tmp_Pvals)
     DEGs <- HSICs[which(max(HSICs) == HSICs):length(HSICs)]
     nonDEGs <- HSICs[1:(which(max(HSICs) == HSICs) - 1)]
     list(DEGs.HSICs = DEGs, DEGs.Pvals = All.pval[names(DEGs)], 

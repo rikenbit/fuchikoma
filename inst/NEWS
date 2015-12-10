@@ -10,10 +10,17 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.5
+------------------------
+   o shrink option is added to HSIC, when the sample size is insufficient
 
 VERSION 0.0.4
 ------------------------
-   o
+   o Debug against FUCHIKOMA (N-1)^2 => N^2
+   o P-value was set as default calculation within HSIC
+   o type option is addded to HSIC
+   o verbose option is added to FUCHIKOMA
+   o Stopping iteration when the remaining gene is below 10
 
 VERSION 0.0.3
 ------------------------

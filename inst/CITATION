@@ -1,0 +1,14 @@
+citEntry(entry="article",
+         title = "Detection of Differentially Expressed Genes in one of multiple clusters using BAHSIC and Diffusion Map",
+         author = personList( as.person("Koki Tsuyuzaki"),
+                              as.person("Haruka Ozaki"),
+                              as.person("Mika Yoshimura"),
+                              as.person("Itoshi Nikaido")),
+         year = 2015,
+         journal = "BMC Bioinformatics",
+         doi = "10.1186/s12859-015-0453-z",
+         url = "http://www.biomedcentral.com/1471-2105/16/45",
+         textVersion =
+         paste("K Tsuyuzaki, M Gota, M Ishii, T Nakazato, S Miyazaki, I Nikaido (2015):",
+               "MeSH ORA framework: R/Bioconductor packages to support MeSH over-representation analysis.",
+                "BMC Bioinformatics" ) )
