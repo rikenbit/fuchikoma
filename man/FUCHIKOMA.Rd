@@ -54,5 +54,5 @@ Maintainer: \packageMaintainer{FUCHIKOMA}
 \examples{
 data(MARS)
 data(label.MARS)
-res <- FUCHIKOMA(data=MARS, mode="Supervised", label=label.MARS, cat.type="one_vs_rest", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01)
+res <- FUCHIKOMA(data=MARS, mode="Supervised", label=label.MARS, cat.type="simple", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, dropout=100)
 }

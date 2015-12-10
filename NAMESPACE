@@ -8,6 +8,7 @@ export(
 	custom.DiffusionMap,
 	CatKernel,
 	HSIC,
+	.Shrink.HSIC,
 	FUCHIKOMA
 )
 

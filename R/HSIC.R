@@ -40,6 +40,7 @@ function (K, L, shrink = FALSE, type = c("gamma", "permutation"),
         p_HSIC <- pgamma(x, shape = Alpha, scale = Beta, lower.tail = FALSE)
     }
     else if (type == "permutation") {
+        registerDoParallel(detectCores())
         HSICs_rand <- foreach(j = 1:n.perm, .export = c("N", 
             "H", "K", "L", "shrink", ".Shrink.HSIC"), .combine = "c") %dopar% 
             {

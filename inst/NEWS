@@ -10,9 +10,20 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.7
+------------------------
+   o
+
+VERSION 0.0.6
+------------------------
+   o test_custom.DiffusionMap.R, test_MARS.R, test_HSIC.R, test_FUCHIKOMA.R, test_UnexpectedUsages.R, test_HSIC_Pval.R
+   o Added registerDoParallel(detectCores()) and foreach in HSIC (permutation)
+
 VERSION 0.0.5
 ------------------------
    o shrink option is added to HSIC, when the sample size is insufficient
+   o Debug in FUCHIKOMA, when the while is stop
+   o test codes are added
 
 VERSION 0.0.4
 ------------------------

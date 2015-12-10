@@ -56,7 +56,10 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
         tmp_Pvals <- unlist(lapply(tmp_HSICs_Pvals, function(x) {
             x$Pval
         }))
-        print(tmp_Pvals)
+        if (verbose) {
+            cat(paste0("### P-value of remaining gene is ###\n"))
+            print(tmp_Pvals)
+        }
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
         names(tmp_Pvals) <- rownames(data)[SurvPosition]
         if (algorithm == "brute") {
