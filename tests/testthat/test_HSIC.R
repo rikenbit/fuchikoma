@@ -1,10 +1,10 @@
 K <- matrix(runif(100), nrow=10)
 L <- matrix(runif(100), nrow=10)
 
-res1 <- HSIC(K, L, shrink=FALSE, type="gamma")
-res2 <- HSIC(K, L, shrink=FALSE, type="permutation")
-res3 <- HSIC(K, L, shrink=FALSE, type="permutation", n.perm=10)
-res4 <- HSIC(K, L, shrink=TRUE, type="gamma")
+res1 <- HSIC(K, L)
+res2 <- HSIC(K, L, type="permutation")
+res3 <- HSIC(K, L, type="permutation", n.perm=10)
+res4 <- HSIC(K, L, shrink=TRUE)
 res5 <- HSIC(K, L, shrink=TRUE, type="permutation")
 res6 <- HSIC(K, L, shrink=TRUE, type="permutation", n.perm=10)
 

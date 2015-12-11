@@ -1,0 +1,252 @@
+%\VignetteIndexEntry{FUCHIKOMA}
+\documentclass[11pt]{article}
+<<style-Sweave, eval=TRUE, echo=FALSE, results=tex>>=
+BiocStyle::latex()
+@
+\usepackage{cite}
+\usepackage{Sweave}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage[numbers]{natbib}
+\usepackage{amssymb}
+% keep.source: T => With comment out line in each chunk
+\SweaveOpts{keep.source=TRUE,eps=FALSE,pdf=TRUE,png=TRUE,include=FALSE,concordance=TRUE}
+\usepackage{url}
+\usepackage[utf8]{inputenc}
+
+\setlength{\textheight}{8.5in}
+\setlength{\textwidth}{6in}
+\setlength{\topmargin}{-0.25in}
+\setlength{\oddsidemargin}{0.25in}
+\setlength{\evensidemargin}{0.25in}
+
+\begin{document}
+
+\title{\bf FUCHIKOMA: Revealing differentially expressed genes with non-linear dimensional reduction using single cell RNA-Seq data}
+\author{Koki Tsuyuzaki$^1$, Haruka Ozaki$^1$, Mika Yoshimura$^1$, and Itoshi Nikaido$^1$.}
+
+\maketitle
+
+\begin{center}
+\noindent
+$^1$Bioinformatics Research Unit, Advanced Center for Computing and Communication, RIKEN.\\
+\end{center}
+
+\begin{center}
+{\tt k.t.the-answer@hotmail.co.jp}
+\end{center}
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\clearpage
+<<echo=false>>=
+options(width=70)
+@
+\section{Introduction}
+This document provides the way to perform \Rpackage{FUCHIKOMA} package. \Rpackage{FUCHIKOMA} is the method for detection of differentially expressed genes (DEGs) within single-cell RNA-Seq (scRNA-Seq) dataset.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{figure}[ht]
+%\centering
+%\includegraphics[width=80mm]{Fig1.jpeg}
+%\caption{Difference of the number of reads}
+%\label{fig1}
+%\end{figure}
+%\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Getting started}
+\subsection{Package loading}
+To install the \Rpackage{FUCHIKOMA} package into your R environment, start R and enter.
+
+\begin{center}
+<<echo=TRUE,print=FALSE>>=
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("FUCHIKOMA")
+@
+\end{center}
+
+And then load the \Rpackage{FUCHIKOMA} package.
+
+\begin{center}
+<<echo=TRUE,print=FALSE>>=
+library("FUCHIKOMA")
+@
+\end{center}
+
+By ls function, we can confirm three functions are loaded from \Rpackage{FUCHIKOMA} package.
+
+\begin{center}
+<<echo=TRUE,print=FALSE>>=
+ls("package:FUCHIKOMA")
+@
+\end{center}
+
+
+
+\subsection{Test data}
+For demonstration of \Rpackage{FUCHIKOMA}, we prepared MARS-Seq data \cite{MARSSeq}, which is a
+
+% ここにMARS-Seqデータの概要を書く
+
+\begin{center}
+<<echo=TRUE,print=FALSE>>=
+data(MARS)
+data(label.MARS)
+data(result.pca.MARS)
+data(result.destiny.MARS)
+@
+\end{center}
+
+\subsection{Effectivity of non-linear dimentional reduction}
+
+% scRNA-Seqでは通常どのようなcell typeが含まれているのか知りたい
+% そのため、2,3次元に次元圧縮をしたのちに、可視化する
+% 次元圧縮ではPCAが一番よく使われる
+% PCAは有用であるが、データが線形に配置されていることを仮定しており、データによっては細胞種を分離できない
+% 例えば、以下は上記のMARS-Seqデータであるが、PCAでは*（青）と**（紫）が分離できない
+
+\begin{center}
+<<echo=TRUE, print=FALSE, include=TRUE, fig=TRUE, width=12, height=12>>=
+pairs(result.pca.MARS$rotation[, 1:10], col=label.MARS)
+@
+\end{center}
+
+% PCAの線形性を解消すべく、近年では非線形な次元圧縮が開発されてきた
+% 以下は、比較的scRNA-Seq分野で利用されている、t-SNEとdiffusionMapの結果であるが、非線形性により、細胞腫を分離できていることがわかる
+% t-SNEでは分離できる*（青）と**（紫）が分離できる : \Rpackage{Rtsne}
+
+
+% DiffusionMapでは*（青）と**（紫）が分離できる : \Rpackage{destiny}
+
+\begin{center}
+<<echo=TRUE, print=FALSE, include=TRUE, fig=TRUE, width=12, height=12>>=
+pairs(result.destiny.MARS@eigenvectors[, 1:10], col=label.MARS)
+@
+\end{center}
+
+\subsection{Limitation of non-linear dimentional reduction}
+
+% 非線形な次元圧縮により細胞型ごとにクラスターが分離できるようになった
+% 次のステップとして、各クラスターを分離することに貢献した、クラスターごとのDEGが知りたい
+% RNA-SeqでのDEG手法は数多く開発されているが、scRNA-Seqのように、多群で、多サンプルサイズであり、想定されている状況とことなる
+% FUCHIKOMAはscRNA-Seq用のDEG手法であり、クラスターごとのDEGsをシームレスに検出する
+% 次のセクションでは、FUCHIKOMAの使い方の詳細を説明する
+
+\subsection{How to get help}
+All \Rpackage{FUCHIKOMA} questions should be posted to the Bioconductor support site: \url{https://support.bioconductor.org}, which serves as a repository of questions and answers. See the first question in the list of Frequently Asked Questions (Section 5) for more information about how to construct an informative post.
+
+\section{How to use FUCHIKOMA}
+
+% FUCHIKOMAは細胞型が既知（ラベル情報あり）の時の、各細胞型のDEGsを検出するSupervised modeと
+% 細胞型が未知（ラベル情報なし）の時の、分離されたクラスターでのDEGsを検出するUnsupervised modeを提供する
+
+\subsection{FUCHIKOMA : Supervised mode (ANOVA-like)}
+
+% ここでは、ラベル情報を用いたSupervised modeでのFUCHIKOMAの使い方を説明する
+% FUCHIKOMAでmodeをSupervisedと指定することで、Supervised modeになる（デフォルトだからここは消す？）
+% cat.typeオプションは、HSICのラベル側のグラム行列の指定の仕方で、
+% algorithmは全遺伝子からnon-DEGを1つずつ削除するbruteと、定めた割合（per.rej）だけnon-DEGを削除するsongを提供する
+% ANOVAライク
+
+% \begin{center}
+% <<echo=TRUE,print=FALSE>>=
+% res.anova <- FUCHIKOMA(data=MARS, mode="Supervised", label=label.MARS, cat.type="simple", algorithm="song", per.rej=10)
+% str(res.s)
+% @
+% \end{center}
+
+% これにより、11個のDEGsが検出されたことがわかる
+
+
+\subsection{FUCHIKOMA : Supervised mode (cluster specific DEGs)}
+
+% 緑のクラスターでのDEGsだけ検出する場合、
+%\begin{center}
+%<<echo=TRUE,print=FALSE>>=
+%res.anova <- FUCHIKOMA(data=MARS, mode="Supervised", label=label.MARS, cat.type="simple", algorithm="song", per.rej=10)
+%str(res.s)
+%@
+%\end{center}
+
+
+% \begin{center}
+% <<echo=TRUE,print=FALSE>>=
+% plot(res.s$All.HSICs, type="l", xlim=c(0, nrow(MARS)), xlab="Sorted by HSIC", ylab="HSIC")
+% points(which(res.s$All.HSICs == max(res.s$All.HSICs)), max(res.s$All.HSICs), col="red", pch=16)
+% abline(v=which(res.s$All.HSICs == max(res.s$All.HSICs)), lty="dashed", col="red")
+% @
+% \end{center}
+
+
+\subsection{FUCHIKOMA : Unsupervised mode}
+
+% ここでは、ラベル情報を用いないSupervised modeでのFUCHIKOMAの使い方を説明する
+% modeをUnsupervisedと指定することで、Unsupervised modeになる
+% Figure ?でのDiffusion Mapの結果の通り、DC1, 2を組み合わせた軸で、青と分離している
+
+% \begin{center}
+% <<echo=TRUE,print=FALSE>>=
+% res.u <- FUCHIKOMA(data=MARS, mode="Unsupervised", label=label.MARS, cat.type="simple", Comp=c(1,2), algorithm="song", per.rej=10)
+% str(res.u)
+% @
+% \end{center}
+
+% names(res.u$DEG.HSICs)とnames(ers.u$DEG.HSICs)のベン図
+% library("VennDiagram")
+% venn.diagram(list(Supervised = names(res.u$DEG.HSICs), Unsupervised = names(ers.u$DEG.HSICs)))
+% ラベル情報がなくても、
+
+
+
+\section{Setup}
+This vignette was built on:
+<<sessionInfo, results=tex, print=TRUE, eval=TRUE>>=
+toLatex(sessionInfo())
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+
+\vspace{2cm}
+
+\begin{thebibliography}{9}
+% \providecommand{\natexlab}[1]{#1}
+% \providecommand{\url}[1]{\texttt{#1}}
+% \expandafter\ifx\csname urlstyle\endcsname\relax
+%   \providecommand{\doi}[1]{doi: #1}\else
+%   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem{destiny}
+Laleh Haghverdi, Florian Buettner and Fabian J. Theis
+\newblock {Bioinformatics}
+\newblock \emph {Diffusion maps for high-dimensional single-cell analysis of differentiation data}, 31(18): 2989-2998, 2015.
+
+\bibitem{BAHSIC}
+Le Song, Justin Bedo, Karsten M. Borgwardt, Arthur Gretton and Alex Smola
+\newblock {Bioinformatics}
+\newblock \emph {Gene selection via the BAHSIC family of algorithms}, 23(13): i490-i498, 2007.
+
+\bibitem{Taguchi}
+Y-h Taguchi, Mitsuo Iwadate and Hideaki Umeyama
+\newblock {BMC Bioinformatics}
+\newblock \emph {Principal component analysis-based unsupervised feature extraction applied to in silico drug discovery for posttraumatic stress disorder-mediated heart disease}, 16(139), 2015.
+
+\bibitem{MARSSeq}
+Diego Adhemar Jaitin, Ephraim Kenigsberg, Hadas Keren-Shaul, Naama Elefant, Franziska Paul, Irina Zaretsky, Alexander Mildner, Nadav Cohen, Steffen Jung, Amos Tanay and Ido Amit
+\newblock {Science}
+\newblock \emph {Massively Parallel Single-Cell RNA-Seq for Marker-Free Decomposition of Tissues into Cell Types}, 343(6172): 776-779, 2014.
+
+\bibitem{Pvalue}
+Arthur Gretton, Kenji Fukumizu, Choon Hui Teo, Le Song, Bernhard Scholkopf and Alexander J. Smola
+\newblock {NIPS 21}
+\newblock \emph {A Kernel Statistical Test of Independence}, 2007.
+
+\bibitem{Shrink}
+Aaditya Ramdas and Leila Wehbe
+\newblock {IJCAI 15}
+\newblock \emph {Nonparametric Independence Testing for Small Sample Sizes}, 2015.
+
+\end{thebibliography}
+
+\end{document}

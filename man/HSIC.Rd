@@ -13,8 +13,8 @@ HSIC(K, L, shrink=FALSE, type=c("gamma", "permutation"), n.perm=100)
 \arguments{
   \item{K}{First gram matrix}
   \item{L}{Second gram matrix}
-  \item{shrink}{Shrinkage option when the sample size is insufficient}
-  \item{type}{When type is gamma, p-value is calculated under the assumption of gamma distribution. When type is permutation, p-value is calculated by random permutation test}
+  \item{shrink}{Shrinkage option when the sample size is insufficient (default:FALSE)}
+  \item{type}{When type is gamma, p-value is calculated under the assumption of gamma distribution. When type is permutation, p-value is calculated by random permutation test (default:gamma)}
   \item{n.perm}{Number of permutation (default:100)}
  }
 \value{

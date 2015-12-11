@@ -5,10 +5,8 @@ import(FNN)
 import(Matrix)
 
 export(
-	custom.DiffusionMap,
 	CatKernel,
 	HSIC,
-	.Shrink.HSIC,
 	FUCHIKOMA
 )
 

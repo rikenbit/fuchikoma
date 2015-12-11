@@ -12,7 +12,7 @@ CatKernel(label, type = c("simple", "two", "one_vs_rest", "each"))
 }
 \arguments{
   \item{label}{
-Label vector descrbing which cells are sample cell type and which cells are different (e.g., c(1,1,1,2,2,2,3,3)).
+Label vector descrbing which cells are sample cell type and which cells are different (e.g., c(1,1,1,2,2,2,3,3) (default:simple)).
 }
   \item{type}{
 Categorical kernel functions. simple could be specified even the number of class is two or more. When the number of class is two, only two parameter is accessible. When the number of class is three or more, one_vs_rest and each is accessible.
@@ -33,6 +33,6 @@ Maintainer: \packageMaintainer{FUCHIKOMA}
 }
 \examples{
 data(label.MARS)
-L <- CatKernel(label.MARS, type="one_vs_rest")
+L <- CatKernel(label.MARS)
 dim(L)
 }

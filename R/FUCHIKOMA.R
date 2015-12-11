@@ -1,16 +1,38 @@
 FUCHIKOMA <-
-function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE, 
-    label = FALSE, cat.type = "simple", n.eigs = 10, algorithm = c("song", 
-        "brute"), per.rej = 10, threshold = 0.01, verbose = FALSE, 
-    dropout = 10) 
+function (data, cores = NULL, mode = c("Supervised", "Unsupervised"), 
+    Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", 
+        "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), 
+    per.rej = 10, threshold = 0.01, verbose = FALSE, dropout = 10) 
 {
-    registerDoParallel(detectCores())
+    if (!is.null(cores) && (cores < 1)) {
+        warning("Inappropriate cores parameter!")
+    }
+    mode <- match.arg(mode, c("Supervised", "Unsupervised"))
+    if (!is.null(Comp) && (Comp > n.eigs)) {
+        warning("Inappropriate Comp parameter!")
+    }
+    cat.type <- match.arg(cat.type, c("simple", "one_vs_rest", 
+        "each", "two"))
+    if ((n.eigs > nrow(data)) || (0 > n.eigs)) {
+        warning("Inappropriate n.eigs parameter!")
+    }
+    algorithm <- match.arg(algorithm, c("song", "brute"))
+    if ((per.rej > 100) || (0 > per.rej)) {
+        warning("Inappropriate per.rej parameter!")
+    }
+    if (!is.numeric(threshold)) {
+        warning("Inappropriate threshold parameter!")
+    }
+    if ((dropout > 100) || (0 > dropout)) {
+        warning("Inappropriate dropout parameter!")
+    }
+    registerDoParallel(detectCores(), cores = cores)
     if ((mode == "Supervised") && (is.vector(label))) {
         L <- CatKernel(label, type = cat.type)
     }
     else if (mode == "Unsupervised") {
         if (is.vector(Comp)) {
-            EigenVecs <- custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+            EigenVecs <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
                 n.eigs = n.eigs)$eigenvectors[, Comp]
             L <- EigenVecs %*% t(EigenVecs)
         }
@@ -37,10 +59,10 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
             break
         }
         tmp_HSICs_Pvals <- foreach(j = 1:length(SurvPosition), 
-            .export = c("SurvPosition", "custom.DiffusionMap", 
+            .export = c("SurvPosition", ".custom.DiffusionMap", 
                 "n.eigs", "HSIC", "data", "L", "sigma")) %dopar% 
             {
-                dif <- try(custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), 
+                dif <- try(.custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), 
                   j)], ]))), n.eigs = n.eigs, sigma = sigma))
                 if ("try-error" %in% class(dif)) {
                   return(NA)
@@ -56,10 +78,6 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
         tmp_Pvals <- unlist(lapply(tmp_HSICs_Pvals, function(x) {
             x$Pval
         }))
-        if (verbose) {
-            cat(paste0("### P-value of remaining gene is ###\n"))
-            print(tmp_Pvals)
-        }
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
         names(tmp_Pvals) <- rownames(data)[SurvPosition]
         if (algorithm == "brute") {
@@ -93,7 +111,6 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = FALSE,
     All.pval <- c(All.pval[setdiff(2:length(All.pval), which(is.na(All.pval)))], 
         tmp_Pvals)
     DEGs <- HSICs[which(max(HSICs) == HSICs):length(HSICs)]
-    nonDEGs <- HSICs[1:(which(max(HSICs) == HSICs) - 1)]
     list(DEGs.HSICs = DEGs, DEGs.Pvals = All.pval[names(DEGs)], 
-        All.HSICs = HSICs, All.Pvals = All.pval, Rej.order = sort(rank(nonDEGs)))
+        All.HSICs = HSICs, All.Pvals = All.pval)
 }

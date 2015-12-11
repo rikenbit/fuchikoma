@@ -1,6 +1,8 @@
 CatKernel <-
 function (label, type = c("simple", "two", "one_vs_rest", "each")) 
 {
+    type <- match.arg(type, c("simple", "two", "one_vs_rest", 
+        "each"))
     N <- length(label)
     tl <- table(label)
     sum.label <- sapply(label, function(x) {

@@ -24,30 +24,24 @@ label3 <- c(rep(1, 20), rep(2, 20), rep(3, 20))
 ######### All combination ########
 ############# 2 group ############
 ### Supervised
-res2_1 <- FUCHIKOMA(data=testdata2, mode="Supervised", label=label2, cat.type="simple", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10)
-res2_2 <- FUCHIKOMA(data=testdata2, mode="Supervised", label=label2, cat.type="two", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10)
+res2_1 <- FUCHIKOMA(data=testdata2, label=label2)
+res2_2 <- FUCHIKOMA(data=testdata2, label=label2, cat.type="two")
 
-expect_warning(
-	expect_error(res2_3 <- FUCHIKOMA(data=testdata2, mode="Supervised", label=label2, cat.type="one_vs_rest", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10))
-)
-expect_warning(
-	expect_error(res2_4 <- FUCHIKOMA(data=testdata2, mode="Supervised", label=label2, cat.type="each", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10))
-)
+expect_warning(expect_error(res2_3 <- FUCHIKOMA(data=testdata2, label=label2, cat.type="one_vs_rest")))
+expect_warning(expect_error(res2_4 <- FUCHIKOMA(data=testdata2, label=label2, cat.type="each")))
 
 ### UnSupervised
-res2_5 <- FUCHIKOMA(data=testdata2, mode="Unsupervised", Comp=c(1,2,3), n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10)
-expect_error(res2_6 <- FUCHIKOMA(data=testdata2, mode="Unsupervised", Comp=1:100, n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10))
+res2_5 <- FUCHIKOMA(data=testdata2, mode="Unsupervised", Comp=c(1,2,3))
+expect_error(res2_6 <- FUCHIKOMA(data=testdata2, mode="Unsupervised", Comp=1:100))
 
 ############# 3 group ############
 ### Supervised
-res3_1 <- FUCHIKOMA(data=testdata3, mode="Supervised", label=label3, cat.type="simple", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10)
-expect_warning(
-	expect_error(res3_2 <- FUCHIKOMA(data=testdata3, mode="Supervised", label=label3, cat.type="two", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10))
-)
+res3_1 <- FUCHIKOMA(data=testdata3, label=label3)
+expect_warning(expect_error(res3_2 <- FUCHIKOMA(data=testdata3, label=label3, cat.type="two")))
 
-res3_3 <- FUCHIKOMA(data=testdata3, mode="Supervised", label=label3, cat.type="one_vs_rest", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10)
-res3_4 <- FUCHIKOMA(data=testdata3, mode="Supervised", label=label3, cat.type="each", n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10)
+res3_3 <- FUCHIKOMA(data=testdata3, label=label3, cat.type="one_vs_rest")
+res3_4 <- FUCHIKOMA(data=testdata3, label=label3, cat.type="each")
 
 ### UnSupervised
-res3_5 <- FUCHIKOMA(data=testdata3, mode="Unsupervised", Comp=c(1,2,3), n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10)
-expect_error(res3_6 <- FUCHIKOMA(data=testdata3, mode="Unsupervised", Comp=1:100, n.eigs=10, algorithm="song", per.rej=10, threshold=0.01, verbose=FALSE, dropout=10))
+res3_5 <- FUCHIKOMA(data=testdata3, mode="Unsupervised", Comp=c(1,2,3))
+expect_error(res3_6 <- FUCHIKOMA(data=testdata3, mode="Unsupervised", Comp=1:100))

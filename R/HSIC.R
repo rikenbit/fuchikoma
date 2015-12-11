@@ -5,6 +5,10 @@ function (K, L, shrink = FALSE, type = c("gamma", "permutation"),
     if (!all(c(dim(K), dim(L)) == dim(K)[1])) {
         stop("\nInappropriate matrices are specified!\nPlease confirm the number of rows and columns.")
     }
+    type <- match.arg(type, c("gamma", "permutation"))
+    if (!is.numeric(n.perm) || (n.perm <= 0)) {
+        warning("Inappropriate n.perm paramter!")
+    }
     N <- dim(K)[1]
     H <- matrix(rep(-1/N), nrow = N, ncol = N)
     diag(H) <- 1 - 1/N
