@@ -1,25 +1,25 @@
 \docType{methods}
-\name{FUCHIKOMA}
-\alias{FUCHIKOMA}
+\name{fuchikoma}
+\alias{fuchikoma}
 \title{
-\packageTitle{FUCHIKOMA}
+\packageTitle{fuchikoma}
 }
 \description{
-\packageDESCRIPTION{FUCHIKOMA}
+\packageDESCRIPTION{fuchikoma}
 }
 \usage{
-FUCHIKOMA(data, cores=NULL, mode = c("Supervised", "Unsupervised"), Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, verbose=FALSE, dropout=10)
+fuchikoma(data, cores=NULL, mode = c("Supervised", "Unsupervised"), Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, verbose=FALSE, dropout=10)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{data}{A data matrix, in which the row means genes and column means cells or sample.}
 \item{cores}{The number of using mathine cores. (default: automaticaly detected number by doParallel package)}
-\item{mode}{When Supervised is specified, FUCHIKOMA uses label paramter. When Unsupervised is specified, FUCHIKOMA uses Comp parameter for specifying which diffusion components should be used. (default:Supervised)}
+\item{mode}{When Supervised is specified, fuchikoma uses label paramter. When Unsupervised is specified, fuchikoma uses Comp parameter for specifying which diffusion components should be used. (default:Supervised)}
 \item{Comp}{When mode is specified as Unsupervised, Comp must be specified such as c(1,2). (default:FALSE)}
 \item{label}{When mode is specified as Supervised, label must be specified such as c(1,1,1,2,2,2,3,3) (default:FALSE)}
 \item{cat.type}{Type of categorical kernel of \code{CatKernel} (default: simple)}
 \item{n.eigs}{Number of eigenvectors/values to return (default: 20)}
-\item{algorithm}{brute means single gene rejection strategies and song means fixed percent of genes rejection strategies in each iteration step of FUCHIKOMA.
+\item{algorithm}{brute means single gene rejection strategies and song means fixed percent of genes rejection strategies in each iteration step of fuchikoma.
  (default:song)}
 \item{per.rej}{When algorithm is specified as song, per.rej must be specified such as 20 (default:10)}
 \item{threshold}{In each iteration step, if the difference of HSIC in the step and max value of previous HSICs is lower than threshold, iteration will be halted (default: 0.01).
@@ -43,9 +43,9 @@ Y-h Taguchi et al. (2015) Principal component analysis-based unsupervised featur
 Aaditya Ramdas et al. (2015) Nonparametric Independence Testing for Small Sample Sizes, IJCAI-15
 }
 \author{
-\packageAuthor{FUCHIKOMA}
+\packageAuthor{fuchikoma}
 
-Maintainer: \packageMaintainer{FUCHIKOMA}
+Maintainer: \packageMaintainer{fuchikoma}
 }
 
 \seealso{
@@ -54,5 +54,5 @@ Maintainer: \packageMaintainer{FUCHIKOMA}
 \examples{
 data(MARS)
 data(label.MARS)
-res <- FUCHIKOMA(data=MARS, cores=4, label=label.MARS)
+res <- fuchikoma(data=MARS, cores=4, label=label.MARS)
 }

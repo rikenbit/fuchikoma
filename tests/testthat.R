@@ -1,3 +1,3 @@
 library("testthat")
-library("FUCHIKOMA")
-test_check("FUCHIKOMA")
+library("fuchikoma")
+test_check("fuchikoma")

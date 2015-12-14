@@ -18,9 +18,9 @@ The data has four different cell types; B cells (B1-B48), Dendritic cells (DC1-D
 \url{http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE54006}
 }
 \author{
-\packageAuthor{FUCHIKOMA}
+\packageAuthor{fuchikoma}
 
-Maintainer: \packageMaintainer{FUCHIKOMA}
+Maintainer: \packageMaintainer{fuchikoma}
 }
 \references{
 Diego Adhemar Jaitin, Ephraim Kenigsberg, Hadas Keren-Shaul, Naama Elefant, Franziska Paul, Irina Zaretsky, Alexander Mildner, Nadav Cohen, Steffen Jung, Amos Tanay, Ido Amit (2014) Massively Parallel Single-Cell RNA-Seq for Marker-Free Decomposition of Tissues into Cell Types. \emph{Science}, \bold{343 (6172)}: 776-779
@@ -29,8 +29,10 @@ Diego Adhemar Jaitin, Ephraim Kenigsberg, Hadas Keren-Shaul, Naama Elefant, Fran
 data(MARS)
 data(label.MARS)
 data(result.pca.MARS)
-data(result.destiny.MARS)
-pairs(result.pca.MARS$rotation[,1:10], col=label.MARS, main="MARS-Seq (PCA)")
-pairs(result.destiny.MARS@eigenvectors[,1:10], col=label.MARS, main="MARS-Seq (Diffusion Map)")
+data(result.tsne.MARS)
+data(result.dmap.MARS)
+pairs(result.pca.MARS, col=label.MARS, main="MARS-Seq (PCA)", pch=16)
+plot(result.tsne.MARS, col=label.MARS, main="MARS-Seq (t-SNE)", pch=16)
+pairs(result.dmap.MARS, col=label.MARS, main="MARS-Seq (Diffusion Map)", pch=16)
 }
 \keyword{datasets}

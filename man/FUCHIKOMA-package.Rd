@@ -1,25 +1,27 @@
-\name{FUCHIKOMA-package}
-\alias{FUCHIKOMA-package}
+\name{fuchikoma-package}
+\alias{fuchikoma-package}
 \docType{package}
 \title{
-\packageTitle{FUCHIKOMA}
+\packageTitle{fuchikoma}
 }
 \description{
-\packageDescription{FUCHIKOMA}
+\packageDescription{fuchikoma}
 }
 \details{
 The DESCRIPTION file:
-\packageDESCRIPTION{FUCHIKOMA}
-\packageIndices{FUCHIKOMA}
-The main function is \code{\link{FUCHIKOMA}}, which returns an object containing the calculation results.
+\packageDESCRIPTION{fuchikoma}
+\packageIndices{fuchikoma}
+The main function is \code{\link{fuchikoma}}, which returns an object containing the calculation results.
 }
 \author{
-\packageAuthor{FUCHIKOMA}
+\packageAuthor{fuchikoma}
 
-Maintainer: \packageMaintainer{FUCHIKOMA}
+Maintainer: \packageMaintainer{fuchikoma}
 }
 \references{
-Koki Tsuyuzaki et al. (2015) Fuchikoma: Detection of Differentially Expressed Genes in one of multiple clusters using BAHSIC and Diffusion Map. R package version 1.0.0
+Koki Tsuyuzaki et al. (2015) fuchikoma: Detection of Differentially Expressed Genes in one of multiple clusters using BAHSIC and Diffusion Map. R package version 1.0.0
+
+L. J. P. van der Maaten et al. (2008) Visualizing High-Dimensional Data Using t-SNE. Journal of Machine Learning Research, 9(Nov), 2579-2605
 
 Laleh Haghverdi et al. (2015) Diffusion maps for high-dimensional single-cell analysis of differentiation data. Bioinformatics, 31(18), 2989-2998
 

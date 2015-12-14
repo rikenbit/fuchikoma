@@ -1,15 +1,15 @@
-\name{label.MARS}
-\alias{label.MARS}
+\name{result.tsne.MARS}
+\alias{result.tsne.MARS}
 \docType{data}
 \title{
-Label vector of MARS-Seq containing four different cell types.
+The result of tsne against MARS-Seq data
 }
 \description{
-Label vector of MARS.
+The result of t-SNE against MARS.
 
 The data has four different cell types; B cells (B1-B48), Dendritic cells (DC1-DC89), Monocytes (Mono1-Mono46), and Natural Killer cells (NK1-NK45).
 }
-\usage{data(label.MARS)}
+\usage{data(result.tsne.MARS)}
 \source{
 \url{https://www.sciencemag.org/content/343/6172/776?related-urls=yes&legid=sci;343/6172/776}
 
@@ -21,7 +21,7 @@ The data has four different cell types; B cells (B1-B48), Dendritic cells (DC1-D
 Maintainer: \packageMaintainer{fuchikoma}
 }
 \references{
-Diego Adhemar Jaitin, Ephraim Kenigsberg, Hadas Keren-Shaul, Naama Elefant, Franziska Paul, Irina Zaretsky, Alexander Mildner, Nadav Cohen, Steffen Jung, Amos Tanay, Ido Amit (2014) Massively Parallel Single-Cell RNA-Seq for Marker-Free Decomposition of Tissues into Cell Types. \emph{Science}, \bold{343 (6172)}: 776-779
+L. J. P. van der Maaten et al. (2008) Visualizing High-Dimensional Data Using t-SNE. Journal of Machine Learning Research, 9(Nov), 2579-2605
 }
 \examples{
 data(MARS)

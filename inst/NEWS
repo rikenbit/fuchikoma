@@ -10,9 +10,17 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.8
+------------------------
+   o testthat/test_UnexpectedUsages.R is added
+   o vignette is added
+   o result.tsne.MARS is added
+
 VERSION 0.0.7
 ------------------------
-   o
+   o match.args
+   o cores option is added to FUCHIKOMA
+   o custom.DiffusionMap is changed as inner function (.custom.DiffusionMap)
 
 VERSION 0.0.6
 ------------------------

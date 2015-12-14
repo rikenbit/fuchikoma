@@ -1,15 +1,15 @@
-\name{label.MARS}
-\alias{label.MARS}
+\name{result.dmap.MARS}
+\alias{result.dmap.MARS}
 \docType{data}
 \title{
-Label vector of MARS-Seq containing four different cell types.
+The result of Diffusion Map against MARS-Seq data
 }
 \description{
-Label vector of MARS.
+The result of dmap against MARS.
 
 The data has four different cell types; B cells (B1-B48), Dendritic cells (DC1-DC89), Monocytes (Mono1-Mono46), and Natural Killer cells (NK1-NK45).
 }
-\usage{data(label.MARS)}
+\usage{data(result.dmap.MARS)}
 \source{
 \url{https://www.sciencemag.org/content/343/6172/776?related-urls=yes&legid=sci;343/6172/776}
 

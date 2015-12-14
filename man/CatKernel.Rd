@@ -27,9 +27,9 @@ Le Song et al. (2007) Gene selection via the BAHSIC family of algorithms, Bioinf
 Y-h Taguchi et al. (2015) Principal component analysis-based unsupervised feature extraction applied to in silico drug discovery for posttraumatic stress disorder-mediated heart disease, BMC Bioinformatics, 16(139)
 }
 \author{
-\packageAuthor{FUCHIKOMA}
+\packageAuthor{fuchikoma}
 
-Maintainer: \packageMaintainer{FUCHIKOMA}
+Maintainer: \packageMaintainer{fuchikoma}
 }
 \examples{
 data(label.MARS)

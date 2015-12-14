@@ -5,7 +5,7 @@
 Hilbert-Schmidt Independence Criteria (HSIC)
 }
 \description{
-Inner function of FUCHIKOMA. HSIC calculated aginst two gram-matrix means the independence of two kernel spaces. The higher HSIC value is, the more two space are dependent. When p.value set TRUE, p-value of HSIC is also calculated by moment matching to a gamma distribution.
+Inner function of fuchikoma. HSIC calculated aginst two gram-matrix means the independence of two kernel spaces. The higher HSIC value is, the more two space are dependent. When p.value set TRUE, p-value of HSIC is also calculated by moment matching to a gamma distribution.
 }
 \usage{
 HSIC(K, L, shrink=FALSE, type=c("gamma", "permutation"), n.perm=100)
@@ -31,9 +31,9 @@ Arthur Gretton et al. (2007) A Kernel Statistical Test of Independence, NIPS 21
 Aaditya Ramdas et al. (2015) Nonparametric Independence Testing for Small Sample Sizes, IJCAI-15
 }
 \author{
-\packageAuthor{FUCHIKOMA}
+\packageAuthor{fuchikoma}
 
-Maintainer: \packageMaintainer{FUCHIKOMA}
+Maintainer: \packageMaintainer{fuchikoma}
 }
 
 \examples{
