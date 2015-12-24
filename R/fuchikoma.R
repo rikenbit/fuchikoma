@@ -32,9 +32,14 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised"),
     }
     else if (mode == "Unsupervised") {
         if (is.vector(Comp)) {
-            EigenVecs <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+            DCs <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
                 n.eigs = n.eigs)$eigenvectors[, Comp]
-            L <- EigenVecs %*% t(EigenVecs)
+            EigenVals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+                n.eigs = n.eigs)$eigenvalues[Comp]
+            DCs_e <- t(apply(DCs, 1, function(x) {
+                x * sqrt(EigenVals)
+            }))
+            L <- DCs_e %*% t(DCs_e)
         }
         else {
             warning("Specify Comp!")

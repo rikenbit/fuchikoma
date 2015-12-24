@@ -7,6 +7,6 @@ import(Matrix)
 export(
 	CatKernel,
 	HSIC,
-	fuchikoma
+	fuchikoma,
+	.uni.fuchikoma
 )
-

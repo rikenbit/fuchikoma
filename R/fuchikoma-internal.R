@@ -115,3 +115,47 @@ function (K, L, H, N, HSIC)
     KL <- 1/N * sum(diag(K %*% H) * diag(L %*% H))
     (1 - (KL - HSIC)/((N - 2) * HSIC + KL/N)^2) * HSIC
 }
+.uni.fuchikoma <-
+function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL, 
+    label = FALSE, cat.type = c("simple", "one_vs_rest", "each", 
+        "two"), n.eigs = 10) 
+{
+    mode <- match.arg(mode, c("Supervised", "Unsupervised"))
+    if (!is.null(Comp) && (Comp > n.eigs)) {
+        warning("Inappropriate Comp parameter!")
+    }
+    cat.type <- match.arg(cat.type, c("simple", "one_vs_rest", 
+        "each", "two"))
+    if ((n.eigs > nrow(data)) || (0 > n.eigs)) {
+        warning("Inappropriate n.eigs parameter!")
+    }
+    if ((mode == "Supervised") && (is.vector(label))) {
+        L <- CatKernel(label, type = cat.type)
+    }
+    else if (mode == "Unsupervised") {
+        if (is.vector(Comp)) {
+            DCs <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+                n.eigs = n.eigs)$eigenvectors[, Comp]
+            EigenVals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+                n.eigs = n.eigs)$eigenvalues[Comp]
+            DCs_e <- t(apply(DCs, 1, function(x) {
+                x * EigenVals
+            }))
+            L <- DCs_e %*% t(DCs_e)
+        }
+        else {
+            warning("Specify Comp!")
+        }
+    }
+    else {
+        warning("Wrong mode!")
+    }
+    HSICs <- apply(data, 1, function(x) {
+        HSIC(as.matrix(x) %*% t(as.matrix(x)), L)
+    })
+    list(All.HSICs = sapply(HSICs, function(x) {
+        x$HSIC
+    }), All.Pvals = sapply(HSICs, function(x) {
+        x$Pval
+    }))
+}
