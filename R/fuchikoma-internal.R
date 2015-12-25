@@ -118,7 +118,7 @@ function (K, L, H, N, HSIC)
 .uni.fuchikoma <-
 function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL, 
     label = FALSE, cat.type = c("simple", "one_vs_rest", "each", 
-        "two"), n.eigs = 10) 
+        "two"), kernel = vanilladot(), n.eigs = 10) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
@@ -151,7 +151,7 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
         warning("Wrong mode!")
     }
     HSICs <- apply(data, 1, function(x) {
-        HSIC(as.matrix(x) %*% t(as.matrix(x)), L)
+        HSIC(kernelMatrix(kernel, t(x)), L)
     })
     list(All.HSICs = sapply(HSICs, function(x) {
         x$HSIC

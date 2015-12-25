@@ -4,16 +4,20 @@ VERSION 1.0.0
 
 
 
-
-
 VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+
+
+VERSION 0.0.10
+------------------------
+   o
+
 VERSION 0.0.9
 ------------------------
    o .uni.fuchikoma : Univariate mode of FUCHCIKOMA is added
-   o Diffusion Component used for construction of Gram matrix L is changed as multipled eigen vectors
+   o DC => DC * λ
 
 VERSION 0.0.8
 ------------------------
