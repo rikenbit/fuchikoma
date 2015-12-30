@@ -151,7 +151,7 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
         warning("Wrong mode!")
     }
     HSICs <- apply(data, 1, function(x) {
-        HSIC(kernelMatrix(kernel, t(x)), L)
+        HSIC(kernelMatrix(kernel, t(t(x))), L)
     })
     list(All.HSICs = sapply(HSICs, function(x) {
         x$HSIC

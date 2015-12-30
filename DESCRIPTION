@@ -1,8 +1,8 @@
 Package: fuchikoma
 Type: Package
 Title: Revealing differentially expressed genes using nonlinear dimensionality reduction for single cell RNA-Seq data
-Version: 0.0.10
-Date: 2015-12-11
+Version: 0.0.11
+Date: 2015-12-30
 Author: Koki Tsuyuzaki, Haruka Ozaki, Mika Yoshimura, Itoshi Nikaido
 Maintainer: Koki Tsuyuzaki <k.t.the-answer@hotmail.co.jp>
 Depends: R (>= 2.5.0), destiny, doParallel, foreach, FNN, Matrix, kernlab
