@@ -9,5 +9,6 @@ export(
 	CatKernel,
 	HSIC,
 	fuchikoma,
-	.uni.fuchikoma
+	.uni.fuchikoma,
+	.omitone.fuchikoma
 )

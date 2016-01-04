@@ -159,3 +159,45 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
         x$Pval
     }))
 }
+.omitone.fuchikoma <-
+function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL, 
+    label = FALSE, cat.type = c("simple", "one_vs_rest", "each", 
+        "two"), kernel = vanilladot(), n.eigs = 10) 
+{
+    mode <- match.arg(mode, c("Supervised", "Unsupervised"))
+    if (!is.null(Comp) && (Comp > n.eigs)) {
+        warning("Inappropriate Comp parameter!")
+    }
+    cat.type <- match.arg(cat.type, c("simple", "one_vs_rest", 
+        "each", "two"))
+    if ((n.eigs > nrow(data)) || (0 > n.eigs)) {
+        warning("Inappropriate n.eigs parameter!")
+    }
+    if ((mode == "Supervised") && (is.vector(label))) {
+        L <- CatKernel(label, type = cat.type)
+    }
+    else if (mode == "Unsupervised") {
+        if (is.vector(Comp)) {
+            DCs <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+                n.eigs = n.eigs)$eigenvectors[, Comp]
+            EigenVals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+                n.eigs = n.eigs)$eigenvalues[Comp]
+            DCs_e <- t(apply(DCs, 1, function(x) {
+                x * EigenVals
+            }))
+            L <- DCs_e %*% t(DCs_e)
+        }
+        else {
+            warning("Specify Comp!")
+        }
+    }
+    else {
+        warning("Wrong mode!")
+    }
+    HSICs <- sapply(1:nrow(data), function(x) {
+        HSIC(kernelMatrix(kernel, t(data[setdiff(1:nrow(data), 
+            x), ])), L)
+    })
+    list(All.HSICs = unlist(HSICs[1, ]), All.Pvals = unlist(HSICs[2, 
+        ]))
+}
