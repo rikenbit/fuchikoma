@@ -153,11 +153,14 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
     HSICs <- apply(data, 1, function(x) {
         HSIC(kernelMatrix(kernel, t(t(x))), L)
     })
+    order.HSIC <- order(sapply(HSICs, function(x) {
+        x$HSIC
+    }))
     list(All.HSICs = sapply(HSICs, function(x) {
         x$HSIC
-    }), All.Pvals = sapply(HSICs, function(x) {
+    })[order.HSIC], All.Pvals = sapply(HSICs, function(x) {
         x$Pval
-    }))
+    })[order.HSIC])
 }
 .omitone.fuchikoma <-
 function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL, 
@@ -198,6 +201,8 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
         HSIC(kernelMatrix(kernel, t(data[setdiff(1:nrow(data), 
             x), ])), L)
     })
+    colnames(HSICs) <- rownames(data)
+    HSICs <- HSICs[, order(unlist(HSICs[1, ]))]
     list(All.HSICs = unlist(HSICs[1, ]), All.Pvals = unlist(HSICs[2, 
         ]))
 }
