@@ -8,6 +8,14 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.14
+------------------------
+   o debug of unsupervised fuchikoma
+
+VERSION 0.0.13
+------------------------
+   o debug of .omitone.fuchikoma
+
 VERSION 0.0.12
 ------------------------
    o .omitone.fuchikoma is added

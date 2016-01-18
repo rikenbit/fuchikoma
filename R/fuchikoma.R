@@ -32,13 +32,20 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised"),
     }
     else if (mode == "Unsupervised") {
         if (is.vector(Comp)) {
-            DCs <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
-                n.eigs = n.eigs)$eigenvectors[, Comp]
-            EigenVals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
-                n.eigs = n.eigs)$eigenvalues[Comp]
-            DCs_e <- t(apply(DCs, 1, function(x) {
-                x * sqrt(EigenVals)
-            }))
+            DCs_Vals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+                n.eigs = n.eigs)
+            DCs <- DCs_Vals$eigenvectors[, Comp]
+            EigenVals <- DCs_Vals$eigenvalues[Comp]
+            if (length(Comp) == 1) {
+                DCs_e <- matrix(sapply(DCs, function(x) {
+                  x * sqrt(EigenVals)
+                }))
+            }
+            else {
+                DCs_e <- t(apply(DCs, 1, function(x) {
+                  x * sqrt(EigenVals)
+                }))
+            }
             L <- DCs_e %*% t(DCs_e)
         }
         else {
