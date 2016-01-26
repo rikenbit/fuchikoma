@@ -34,6 +34,8 @@ Diego Adhemar Jaitin et al. (2014) Massively Parallel Single-Cell RNA-Seq for Ma
 Arthur Gretton et al. (2007) A Kernel Statistical Test of Independence, NIPS 21
 
 Aaditya Ramdas et al. (2015) Nonparametric Independence Testing for Small Sample Sizes, IJCAI-15
+
+Marioni, J.C. and Mason, C.E. and Mane, S.M. and Stephens, M. and Gilad, Y. (2008) RNA-seq: an assessment of technical reproducibility and comparison with gene expression arrays. \emph{Genome Research}, \bold{18}: 1509--1517.
 }
 \keyword{ package }
 \seealso{

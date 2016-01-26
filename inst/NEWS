@@ -8,6 +8,15 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.15
+------------------------
+   o Marioni data is added
+   o simulateDropoutCounts function is added
+
+VERSION 0.0.14
+------------------------
+   o debug of unsupervised fuchikoma
+
 VERSION 0.0.14
 ------------------------
    o debug of unsupervised fuchikoma

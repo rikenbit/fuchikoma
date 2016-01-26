@@ -9,6 +9,7 @@ export(
 	CatKernel,
 	HSIC,
 	fuchikoma,
+	simulateDropoutCounts,
 	.uni.fuchikoma,
 	.omitone.fuchikoma
 )
