@@ -116,11 +116,11 @@ function (K, L, H, N, HSIC)
     (1 - (KL - HSIC)/((N - 2) * HSIC + KL/N)^2) * HSIC
 }
 .uni.fuchikoma <-
-function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL, 
-    label = FALSE, cat.type = c("simple", "one_vs_rest", "each", 
-        "two"), kernel = vanilladot(), n.eigs = 10) 
+function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
+    Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", 
+        "each", "two"), kernel = vanilladot(), n.eigs = 10) 
 {
-    mode <- match.arg(mode, c("Supervised", "Unsupervised"))
+    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
         warning("Inappropriate Comp parameter!")
     }
@@ -129,34 +129,8 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
     if ((n.eigs > nrow(data)) || (0 > n.eigs)) {
         warning("Inappropriate n.eigs parameter!")
     }
-    if ((mode == "Supervised") && (is.vector(label))) {
-        L <- CatKernel(label, type = cat.type)
-    }
-    else if (mode == "Unsupervised") {
-        if (is.vector(Comp)) {
-            DCs_Vals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
-                n.eigs = n.eigs)
-            DCs <- DCs_Vals$eigenvectors[, Comp]
-            EigenVals <- DCs_Vals$eigenvalues[Comp]
-            if (length(Comp) == 1) {
-                DCs_e <- matrix(sapply(DCs, function(x) {
-                  x * sqrt(EigenVals)
-                }))
-            }
-            else {
-                DCs_e <- t(apply(DCs, 1, function(x) {
-                  x * sqrt(EigenVals)
-                }))
-            }
-            L <- DCs_e %*% t(DCs_e)
-        }
-        else {
-            warning("Specify Comp!")
-        }
-    }
-    else {
-        warning("Wrong mode!")
-    }
+    L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
+        label = label, cat.type = cat.type, n.eigs = n.eigs)
     HSICs <- apply(data, 1, function(x) {
         HSIC(kernelMatrix(kernel, t(t(x))), L)
     })
@@ -170,11 +144,11 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
     })[order.HSIC])
 }
 .omitone.fuchikoma <-
-function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL, 
-    label = FALSE, cat.type = c("simple", "one_vs_rest", "each", 
-        "two"), kernel = vanilladot(), n.eigs = 10) 
+function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
+    Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", 
+        "each", "two"), kernel = vanilladot(), n.eigs = 10) 
 {
-    mode <- match.arg(mode, c("Supervised", "Unsupervised"))
+    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
         warning("Inappropriate Comp parameter!")
     }
@@ -183,6 +157,22 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
     if ((n.eigs > nrow(data)) || (0 > n.eigs)) {
         warning("Inappropriate n.eigs parameter!")
     }
+    L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
+        label = label, cat.type = cat.type, n.eigs = n.eigs)
+    HSICs <- sapply(1:nrow(data), function(x) {
+        HSIC(kernelMatrix(kernel, t(data[setdiff(1:nrow(data), 
+            x), ])), L)
+    })
+    colnames(HSICs) <- rownames(data)
+    HSICs <- HSICs[, order(unlist(HSICs[1, ]))]
+    list(All.HSICs = unlist(HSICs[1, ]), All.Pvals = unlist(HSICs[2, 
+        ]))
+}
+.Lmatrix <-
+function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
+    weight = weight, Comp = NULL, label = FALSE, cat.type = c("simple", 
+        "one_vs_rest", "each", "two"), n.eigs = 10) 
+{
     if ((mode == "Supervised") && (is.vector(label))) {
         L <- CatKernel(label, type = cat.type)
     }
@@ -208,15 +198,32 @@ function (data, mode = c("Supervised", "Unsupervised"), Comp = NULL,
             warning("Specify Comp!")
         }
     }
+    else if (mode == "Mix") {
+        L1 <- CatKernel(label, type = cat.type)
+        if (is.vector(Comp)) {
+            DCs_Vals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
+                n.eigs = n.eigs)
+            DCs <- DCs_Vals$eigenvectors[, Comp]
+            EigenVals <- DCs_Vals$eigenvalues[Comp]
+            if (length(Comp) == 1) {
+                DCs_e <- matrix(sapply(DCs, function(x) {
+                  x * sqrt(EigenVals)
+                }))
+            }
+            else {
+                DCs_e <- t(apply(DCs, 1, function(x) {
+                  x * sqrt(EigenVals)
+                }))
+            }
+            L2 <- DCs_e %*% t(DCs_e)
+        }
+        else {
+            warning("Specify Comp!")
+        }
+        L <- weight[1] * L1 + weight[2] * L2
+    }
     else {
         warning("Wrong mode!")
     }
-    HSICs <- sapply(1:nrow(data), function(x) {
-        HSIC(kernelMatrix(kernel, t(data[setdiff(1:nrow(data), 
-            x), ])), L)
-    })
-    colnames(HSICs) <- rownames(data)
-    HSICs <- HSICs[, order(unlist(HSICs[1, ]))]
-    list(All.HSICs = unlist(HSICs[1, ]), All.Pvals = unlist(HSICs[2, 
-        ]))
+    L
 }

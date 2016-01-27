@@ -8,6 +8,10 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.16
+------------------------
+   o "Mix" mode is added in fuchikoma function
+
 VERSION 0.0.15
 ------------------------
    o Marioni data is added

@@ -8,13 +8,14 @@
 \packageDESCRIPTION{fuchikoma}
 }
 \usage{
-fuchikoma(data, cores=NULL, mode = c("Supervised", "Unsupervised"), Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, verbose=FALSE, dropout=10)
+fuchikoma(data, cores=NULL, mode = c("Supervised", "Unsupervised", "Mix"), weight=c(0.5,0.5), Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, verbose=FALSE, dropout=10)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{data}{A data matrix, in which the row means genes and column means cells or sample.}
 \item{cores}{The number of using mathine cores. (default: automaticaly detected number by doParallel package)}
-\item{mode}{When Supervised is specified, fuchikoma uses label paramter. When Unsupervised is specified, fuchikoma uses Comp parameter for specifying which diffusion components should be used. (default:Supervised)}
+\item{mode}{When Supervised is specified, fuchikoma uses label paramter. When Unsupervised is specified, fuchikoma uses Comp parameter for specifying which diffusion components should be used. When Mixed is specified, fuchikoma uses both mode (default:Supervised)}
+\item{weight}{Weight for integrating two gram matrix, when mode is specified as Mix (default:0.5 vs 0.5)}
 \item{Comp}{When mode is specified as Unsupervised, Comp must be specified such as c(1,2). (default:FALSE)}
 \item{label}{When mode is specified as Supervised, label must be specified such as c(1,1,1,2,2,2,3,3) (default:FALSE)}
 \item{cat.type}{Type of categorical kernel of \code{CatKernel} (default: simple)}
@@ -52,7 +53,20 @@ Maintainer: \packageMaintainer{fuchikoma}
 \code{\link[destiny]{DiffusionMap}}
 }
 \examples{
-data(MARS)
-data(label.MARS)
-res <- fuchikoma(data=MARS, cores=4, label=label.MARS)
+# three cell data
+CellA <- data.frame(matrix(rnorm(50*20), nrow=50, ncol=20))
+CellB <- data.frame(matrix(rnorm(50*20), nrow=50, ncol=20))
+
+# DEGs definition
+CellA[1:10, ] <- CellA[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
+CellB[11:20, ] <- CellB[1:10, ] + 10 * matrix(runif(10*20), nrow=10, ncol=20)
+# testdata
+testdata2 <- data.frame(CellA, CellB)
+colnames(testdata2) <- c(paste0("CellA_", 1:20), paste0("CellB_", 1:20))
+rownames(testdata2) <- paste0("Gene", 1:nrow(testdata2))
+
+# label
+label2 <- c(rep(1, 20), rep(2, 20))
+
+res <- fuchikoma(data=testdata2, cores=1, label=label2)
 }

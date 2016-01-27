@@ -1,13 +1,17 @@
 fuchikoma <-
-function (data, cores = NULL, mode = c("Supervised", "Unsupervised"), 
-    Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", 
-        "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), 
-    per.rej = 10, threshold = 0.01, verbose = FALSE, dropout = 10) 
+function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
+    "Mix"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
+    cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, 
+    algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, 
+    verbose = FALSE, dropout = 10) 
 {
     if (!is.null(cores) && (cores < 1)) {
         warning("Inappropriate cores parameter!")
     }
-    mode <- match.arg(mode, c("Supervised", "Unsupervised"))
+    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
+    if (sum(weight) != 1) {
+        warning("Sum of weight must be 1!")
+    }
     if (!is.null(Comp) && (Comp > n.eigs)) {
         warning("Inappropriate Comp parameter!")
     }
@@ -27,34 +31,8 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised"),
         warning("Inappropriate dropout parameter!")
     }
     registerDoParallel(detectCores(), cores = cores)
-    if ((mode == "Supervised") && (is.vector(label))) {
-        L <- CatKernel(label, type = cat.type)
-    }
-    else if (mode == "Unsupervised") {
-        if (is.vector(Comp)) {
-            DCs_Vals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
-                n.eigs = n.eigs)
-            DCs <- DCs_Vals$eigenvectors[, Comp]
-            EigenVals <- DCs_Vals$eigenvalues[Comp]
-            if (length(Comp) == 1) {
-                DCs_e <- matrix(sapply(DCs, function(x) {
-                  x * sqrt(EigenVals)
-                }))
-            }
-            else {
-                DCs_e <- t(apply(DCs, 1, function(x) {
-                  x * sqrt(EigenVals)
-                }))
-            }
-            L <- DCs_e %*% t(DCs_e)
-        }
-        else {
-            warning("Specify Comp!")
-        }
-    }
-    else {
-        warning("Wrong mode!")
-    }
+    L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
+        label = label, cat.type = cat.type, n.eigs = n.eigs)
     HSICs <- 0
     All.pval <- 0
     RejPosition <- c()

@@ -24,24 +24,24 @@ label3 <- c(rep(1, 20), rep(2, 20), rep(3, 20))
 ######### All combination ########
 ############# 2 group ############
 ### Supervised
-res2_1 <- fuchikoma(data=testdata2, label=label2)
-res2_2 <- fuchikoma(data=testdata2, label=label2, cat.type="two")
+res2_1 <- fuchikoma(data=testdata2, cores=1, label=label2)
+res2_2 <- fuchikoma(data=testdata2, cores=1, label=label2, cat.type="two")
 
-expect_warning(expect_error(res2_3 <- fuchikoma(data=testdata2, label=label2, cat.type="one_vs_rest")))
-expect_warning(expect_error(res2_4 <- fuchikoma(data=testdata2, label=label2, cat.type="each")))
+expect_warning(expect_error(res2_3 <- fuchikoma(data=testdata2, cores=1, label=label2, cat.type="one_vs_rest")))
+expect_warning(expect_error(res2_4 <- fuchikoma(data=testdata2, cores=1, label=label2, cat.type="each")))
 
 ### UnSupervised
-res2_5 <- fuchikoma(data=testdata2, mode="Unsupervised", Comp=c(1,2,3))
-expect_error(res2_6 <- fuchikoma(data=testdata2, mode="Unsupervised", Comp=1:100))
+res2_5 <- fuchikoma(data=testdata2, cores=1, mode="Unsupervised", Comp=c(1,2,3))
+expect_error(res2_6 <- fuchikoma(data=testdata2, cores=1, mode="Unsupervised", Comp=1:100))
 
 ############# 3 group ############
 ### Supervised
 res3_1 <- fuchikoma(data=testdata3, label=label3)
-expect_warning(expect_error(res3_2 <- fuchikoma(data=testdata3, label=label3, cat.type="two")))
+expect_warning(expect_error(res3_2 <- fuchikoma(data=testdata3, cores=1, label=label3, cat.type="two")))
 
-res3_3 <- fuchikoma(data=testdata3, label=label3, cat.type="one_vs_rest")
-res3_4 <- fuchikoma(data=testdata3, label=label3, cat.type="each")
+res3_3 <- fuchikoma(data=testdata3, cores=1, label=label3, cat.type="one_vs_rest")
+res3_4 <- fuchikoma(data=testdata3, cores=1, label=label3, cat.type="each")
 
 ### UnSupervised
-res3_5 <- fuchikoma(data=testdata3, mode="Unsupervised", Comp=c(1,2,3))
-expect_error(res3_6 <- fuchikoma(data=testdata3, mode="Unsupervised", Comp=1:100))
+res3_5 <- fuchikoma(data=testdata3, cores=1, mode="Unsupervised", Comp=c(1,2,3))
+expect_error(res3_6 <- fuchikoma(data=testdata3, cores=1, mode="Unsupervised", Comp=1:100))
