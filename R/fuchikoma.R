@@ -30,7 +30,13 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     if ((dropout > 100) || (0 > dropout)) {
         warning("Inappropriate dropout parameter!")
     }
-    registerDoParallel(detectCores(), cores = cores)
+    if (is.null(cores)) {
+        registerDoParallel(detectCores())
+    }
+    else {
+        registerDoParallel(cores)
+    }
+    on.exit(stopImplicitCluster())
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
         label = label, cat.type = cat.type, n.eigs = n.eigs)
     HSICs <- 0
@@ -70,6 +76,12 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
         }))
         names(tmp_HSICs) <- rownames(data)[SurvPosition]
         names(tmp_Pvals) <- rownames(data)[SurvPosition]
+        if (verbose) {
+            print("###### HSIC ######")
+            print(head(tmp_HSICs))
+            print("###### P-value ######")
+            print(head(tmp_Pvals))
+        }
         if (algorithm == "brute") {
             NoRej <- 1
         }
@@ -100,7 +112,12 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
         tmp_HSICs)
     All.pval <- c(All.pval[setdiff(2:length(All.pval), which(is.na(All.pval)))], 
         tmp_Pvals)
-    DEGs <- HSICs[which(max(HSICs) == HSICs):length(HSICs)]
+    if (max(HSICs) != mean(HSICs)) {
+        DEGs <- HSICs[which(max(HSICs) == HSICs):length(HSICs)]
+    }
+    else {
+        DEGs <- NA
+    }
     list(DEGs.HSICs = DEGs, DEGs.Pvals = All.pval[names(DEGs)], 
         All.HSICs = HSICs, All.Pvals = All.pval)
 }

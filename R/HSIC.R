@@ -24,24 +24,24 @@ function (K, L, shrink = FALSE, type = c("gamma", "permutation"),
     if (type == "gamma") {
         u_x2 <- 1/(N * (N - 1)) * sum(K[upper.tri(K)])
         u_y2 <- 1/(N * (N - 1)) * sum(L[upper.tri(L)])
-        E_HSIC <- 1/N * (1 + u_x2 * u_y2 - u_x2 - u_y2)
+        (E_HSIC <- 1/N * (1 + u_x2 * u_y2 - u_x2 - u_y2))
         H <- matrix(rep(-1/N), nrow = N, ncol = N)
         diag(H) <- 1 - 1/N
         B <- H %*% K %*% H * H %*% L %*% H
         B <- B * B
-        var_HSIC <- sum(2 * (N - 4) * (N - 5)/(N * (N - 1) * 
+        (var_HSIC <- sum(2 * (N - 4) * (N - 5)/(N * (N - 1) * 
             (N - 2) * (N - 3)) * t(rep(1, length = N)) %*% (B - 
-            diag(B)))
-        if (E_HSIC <= 0) {
-            E_HSIC <- 0.1
+            diag(B))))
+        if ((E_HSIC > 0) && (var_HSIC > 0)) {
+            Alpha <- E_HSIC^2/var_HSIC
+            Beta <- N * var_HSIC/E_HSIC
+            x <- N * hsic.value
+            p_HSIC <- pgamma(x, shape = Alpha, scale = Beta, 
+                lower.tail = FALSE)
         }
-        if (var_HSIC <= 0) {
-            var_HSIC <- 0.1
+        else {
+            p_HSIC <- 0
         }
-        Alpha <- E_HSIC^2/var_HSIC
-        Beta <- N * var_HSIC/E_HSIC
-        x <- N * hsic.value
-        p_HSIC <- pgamma(x, shape = Alpha, scale = Beta, lower.tail = FALSE)
     }
     else if (type == "permutation") {
         registerDoParallel(detectCores())

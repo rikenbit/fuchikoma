@@ -56,8 +56,16 @@ function (Ngene = 10000, PDEG = 0.2, DEG.assign = c(0.5, 0.5),
         })
     })
     testdata.matrix <- original.matrix * droprate.matrix
-    colnames(testdata.matrix) <- paste0("Cell_", 1:ncol(testdata.matrix))
+    colnames(testdata.matrix) <- as.vector(unlist(sapply(1:length(replicates), 
+        function(x) {
+            paste0("Group", x, "_rep", 1:replicates[x])
+        })))
     rownames(testdata.matrix) <- paste0("Gene_", 1:nrow(testdata.matrix))
-    return(list(DEG = rownames(testdata.matrix)[which(rowMeans(design.matrix) != 
+    Group <- unlist(sapply(1:length(replicates), function(x) {
+        group <- rep(x, length = replicates[x])
+        names(group) <- rep(paste0("Group", x), length = replicates[x])
+        group
+    }, simplify = FALSE))
+    return(list(Group = Group, DEG = rownames(testdata.matrix)[which(rowMeans(design.matrix) != 
         1)], FC = design.matrix, Simcount = testdata.matrix))
 }
