@@ -12,5 +12,6 @@ export(
 	simulateDropoutCounts,
 	.uni.fuchikoma,
 	.omitone.fuchikoma,
-	.Lmatrix
+	.Lmatrix,
+	.estimate.sigma
 )

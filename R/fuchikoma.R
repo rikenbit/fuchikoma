@@ -43,31 +43,35 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     All.pval <- 0
     RejPosition <- c()
     SurvPosition <- 1:nrow(data)
+    counter <- 0
+    sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data))), 
+        verbose = FALSE)), silent = TRUE)
+    if ("try-error" %in% class(sigma)) {
+        cat(paste0("Error in destiny::optimal.sigma !!\n"))
+        break
+    }
     while (length(SurvPosition) > dropout) {
         if (verbose) {
+            counter <- counter + 1
+            try(dir.create("verbose"))
+            try(dir.create(paste0("verbose/step_", counter)))
             cat(paste0("### No. of remaining gene is ", length(SurvPosition), 
                 " ###\n"))
         }
-        sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data[SurvPosition, 
-            ]))), verbose = FALSE)), silent = TRUE)
-        if ("try-error" %in% class(sigma)) {
-            cat(paste0("Error in destiny::optimal.sigma !!\n"))
-            break
-        }
         tmp_HSICs_Pvals <- foreach(j = 1:length(SurvPosition), 
             .export = c("SurvPosition", ".custom.DiffusionMap", 
-                "n.eigs", "HSIC", "data", "L", "sigma")) %dopar% 
-            {
-                dif <- try(.custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), 
-                  j)], ]))), n.eigs = n.eigs, sigma = sigma))
-                if ("try-error" %in% class(dif)) {
-                  return(NA)
-                }
-                else {
-                  K <- dif$M
-                  HSIC(K, L)
-                }
+                "n.eigs", "HSIC", "data", "L", "sigma", "verbose", 
+                "counter")) %dopar% {
+            dif <- try(.custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[SurvPosition[setdiff(1:length(SurvPosition), 
+                j)], ]))), n.eigs = n.eigs, sigma = sigma))
+            if ("try-error" %in% class(dif)) {
+                return(NA)
             }
+            else {
+                K <- dif$M
+                HSIC(K, L)
+            }
+        }
         tmp_HSICs <- unlist(lapply(tmp_HSICs_Pvals, function(x) {
             x$HSIC
         }))

@@ -12,7 +12,7 @@ function (label, type = c("simple", "two", "one_vs_rest", "each"))
         sapply(label, function(x) {
             out <- rep(0, length = length(label))
             out[which(x == label)] <- 1
-            out[which(x != label)] <- -1
+            out[which(x != label)] <- 0
             out
         })
     }

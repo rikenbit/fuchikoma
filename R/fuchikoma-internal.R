@@ -144,9 +144,10 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
     })[order.HSIC])
 }
 .omitone.fuchikoma <-
-function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
-    Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", 
-        "each", "two"), kernel = vanilladot(), n.eigs = 10) 
+function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
+    "Mix"), Comp = NULL, label = FALSE, cat.type = c("simple", 
+    "one_vs_rest", "each", "two"), destiny = FALSE, kernel = vanilladot(), 
+    n.eigs = 10) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
@@ -157,12 +158,47 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
     if ((n.eigs > nrow(data)) || (0 > n.eigs)) {
         warning("Inappropriate n.eigs parameter!")
     }
+    if (is.null(cores)) {
+        registerDoParallel(detectCores())
+    }
+    else {
+        registerDoParallel(cores)
+    }
+    on.exit(stopImplicitCluster())
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
         label = label, cat.type = cat.type, n.eigs = n.eigs)
-    HSICs <- sapply(1:nrow(data), function(x) {
-        HSIC(kernelMatrix(kernel, t(data[setdiff(1:nrow(data), 
-            x), ])), L)
-    })
+    sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data))), 
+        verbose = FALSE)), silent = TRUE)
+    if ("try-error" %in% class(sigma)) {
+        cat(paste0("Error in destiny::optimal.sigma !!\n"))
+        break
+    }
+    if (destiny) {
+        HSICs <- foreach(j = 1:nrow(data), .export = c("SurvPosition", 
+            ".custom.DiffusionMap", "n.eigs", "HSIC", "data", 
+            "L", "sigma", "verbose", "counter")) %dopar% {
+            dif <- try(.custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data[setdiff(1:nrow(data), 
+                j), ]))), n.eigs = n.eigs, sigma = sigma))
+            if ("try-error" %in% class(dif)) {
+                return(NA)
+            }
+            else {
+                K <- dif$M
+                HSIC(K, L)
+            }
+        }
+        HSICs <- t(cbind(sapply(HSICs, function(x) {
+            x$HSIC
+        }), sapply(HSICs, function(x) {
+            x$Pval
+        })))
+    }
+    else {
+        HSICs <- sapply(1:nrow(data), function(x) {
+            HSIC(kernelMatrix(kernel, t(data[setdiff(1:nrow(data), 
+                x), ])), L)
+        })
+    }
     colnames(HSICs) <- rownames(data)
     HSICs <- HSICs[, order(unlist(HSICs[1, ]))]
     list(All.HSICs = unlist(HSICs[1, ]), All.Pvals = unlist(HSICs[2, 
@@ -226,4 +262,37 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
         warning("Wrong mode!")
     }
     L
+}
+.estimate.sigma <-
+function (x, type = c("destiny", "matlab")) 
+{
+    if (type == "destiny") {
+        sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data))), 
+            verbose = FALSE)), silent = TRUE)
+        if ("try-error" %in% class(sigma)) {
+            cat(paste0("Error in destiny::optimal.sigma !!\n"))
+            break
+        }
+    }
+    else if (type == "matlab") {
+        size1 <- nrow(data)
+        if (size1 > 100) {
+            Xmed <- data[1:100, ]
+            size1 <- 100
+        }
+        else {
+            Xmed <- data
+        }
+        G <- apply(Xmed^2, 1, sum)
+        Q <- as.matrix(replicate(size1, G))
+        R <- t(as.matrix(replicate(size1, G)))
+        dists <- Q + R - 2 * Xmed %*% t(Xmed)
+        dists[lower.tri(dists)] <- 0
+        dists <- as.vector(dists)
+        sigma <- sqrt(0.5 * median(dists[which(dists > 0)]))
+    }
+    else {
+        stop("Wrong type!")
+    }
+    sigma
 }

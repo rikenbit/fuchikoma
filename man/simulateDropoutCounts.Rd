@@ -7,10 +7,11 @@
 This function generates simulation data with arbitrary defined experimental condition.
 }
 \usage{
-simulateDropoutCounts(Ngene = 10000, PDEG = 0.2, DEG.assign = c(0.5, 0.5), DEG.foldchange = c(4, 4), replicates = c(3, 3), Lambda = 0.1)
+simulateDropoutCounts(Ngene = 10000, makeDEG=TRUE, PDEG = 0.2, DEG.assign = c(0.5, 0.5), DEG.foldchange = c(4, 4), replicates = c(3, 3), Lambda = 0.1)
 }
 \arguments{
   \item{Ngene}{No. of gene (defalult:10000)}
+  \item{makeDEG}{Whether make DEG or not (defalult:TRUE)}
   \item{PDEG}{Percentage of DEG (defalult:0.2)}
   \item{DEG.assign}{Ratio of DEG in each cluster (defalult:c(0.5, 0.5))}
   \item{DEG.foldchange}{Fold change  in each cluster (defalult:c(4, 4))}

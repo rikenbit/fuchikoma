@@ -1,6 +1,6 @@
 simulateDropoutCounts <-
-function (Ngene = 10000, PDEG = 0.2, DEG.assign = c(0.5, 0.5), 
-    DEG.foldchange = c(4, 4), replicates = c(3, 3), Lambda = 0.1) 
+function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.2, DEG.assign = c(0.5, 
+    0.5), DEG.foldchange = c(4, 4), replicates = c(3, 3), Lambda = 0.1) 
 {
     if (!is.numeric(Ngene)) {
         warning("Please specify the Ngene as numeric!")
@@ -11,46 +11,46 @@ function (Ngene = 10000, PDEG = 0.2, DEG.assign = c(0.5, 0.5),
     if (sum(DEG.assign) != 1) {
         warning("Please specify the DEG.assign as vector(sum(DEG.assign) is 1)!")
     }
-    if ((length(DEG.assign) != length(DEG.foldchange)) || (length(DEG.foldchange) != 
-        length(replicates))) {
-        warning("Please specify the DEG.assign, DEG.foldchange, and DEG.foldchange as same length vectors!")
+    if ((length(DEG.assign) != length(DEG.foldchange))) {
+        warning("Please specify the DEG.assign and DEG.foldchange are the same length!")
     }
     if (!is.numeric(Lambda)) {
         warning("Please specify the Lambda as numeric!")
     }
-    Nreplicate <- sum(replicates)
-    No.DEG <- Ngene * PDEG * DEG.assign
     data(Marioni)
     mu <- apply(Marioni, 1, mean)
     v <- apply(Marioni, 1, var)
     Disp <- (v - mu)/mu^2
     rn.index <- sample(which(Disp > 0), Ngene, replace = TRUE)
-    design.matrix <- matrix(1, nrow = Ngene, ncol = length(replicates))
-    for (i in 1:length(replicates)) {
-        if (i == 1) {
-            row.index <- 1:No.DEG[1]
-        }
-        else {
-            row.index <- sum(No.DEG[1:(i - 1)]) + 1:sum(No.DEG[i])
-        }
-        design.matrix[row.index, i] <- DEG.foldchange[i]
-    }
     original.matrix <- t(sapply(rn.index, function(x) {
-        rnbinom(n = Nreplicate, mu = mu[x], size = 1/Disp[x])
+        rnbinom(n = sum(replicates), mu = mu[x], size = 1/Disp[x])
     }))
-    for (i in 1:length(replicates)) {
-        deg.index <- which(design.matrix[, i] != 1)
-        col.index <- sum(replicates[i - 1]) + 1:sum(replicates[i])
-        original.matrix[deg.index, col.index] <- t(sapply(rn.index[deg.index], 
-            function(x) {
-                rnbinom(n = replicates[i], mu = DEG.foldchange[i] * 
-                  mu[x], size = 1/Disp[x])
-            }))
+    if (makeDEG) {
+        No.DEG <- Ngene * PDEG * DEG.assign
+        design.matrix <- matrix(1, nrow = Ngene, ncol = length(replicates))
+        for (i in 1:length(replicates)) {
+            if (i == 1) {
+                row.index <- 1:No.DEG[1]
+            }
+            else {
+                row.index <- sum(No.DEG[1:(i - 1)]) + 1:sum(No.DEG[i])
+            }
+            design.matrix[row.index, i] <- DEG.foldchange[i]
+        }
+        for (i in 1:length(replicates)) {
+            deg.index <- which(design.matrix[, i] != 1)
+            col.index <- sum(replicates[1:i - 1]) + 1:sum(replicates[i])
+            original.matrix[deg.index, col.index] <- t(sapply(rn.index[deg.index], 
+                function(x) {
+                  rnbinom(n = replicates[i], mu = DEG.foldchange[i] * 
+                    mu[x], size = 1/Disp[x])
+                }))
+        }
     }
     mean.vector <- apply(original.matrix, 1, mean)
     var.vector <- apply(original.matrix, 1, var)
     droprate <- exp(-Lambda * mean.vector^2)
-    droprate.matrix <- sapply(1:Nreplicate, function(y) {
+    droprate.matrix <- sapply(1:sum(replicates), function(y) {
         sapply(droprate, function(x) {
             rbinom(1, 1, prob = (1 - x))
         })
@@ -66,6 +66,11 @@ function (Ngene = 10000, PDEG = 0.2, DEG.assign = c(0.5, 0.5),
         names(group) <- rep(paste0("Group", x), length = replicates[x])
         group
     }, simplify = FALSE))
-    return(list(Group = Group, DEG = rownames(testdata.matrix)[which(rowMeans(design.matrix) != 
-        1)], FC = design.matrix, Simcount = testdata.matrix))
+    if (makeDEG) {
+        return(list(Group = Group, DEG = rownames(testdata.matrix)[which(rowMeans(design.matrix) != 
+            1)], FC = design.matrix, Simcount = testdata.matrix))
+    }
+    else {
+        return(list(Group = Group, Simcount = testdata.matrix))
+    }
 }
