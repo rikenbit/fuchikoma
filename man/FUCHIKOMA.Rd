@@ -27,7 +27,7 @@ fuchikoma(data, cores=NULL, mode = c("Supervised", "Unsupervised", "Mix"), weigh
 }
 \item{verbose}{verbose option (default: FALSE).}
 \item{dropout}{Threshold when the remaining gene is few (default: 10).}
-\item{sigma}{Parameter used in DiffusionMap of destiny (default: 60).}
+\item{sigma}{Parameter in DiffusionMap of destiny (default: 60).}
 }
 \value{
 \item{DEGs.HSICs}{Differentially expressed genes (DEGs) and HSIC values}
