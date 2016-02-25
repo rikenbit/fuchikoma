@@ -3,7 +3,7 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     "Mix"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, 
     algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, 
-    verbose = FALSE, dropout = 10) 
+    verbose = FALSE, dropout = 10, sigma = 60) 
 {
     if (!is.null(cores) && (cores < 1)) {
         warning("Inappropriate cores parameter!")
@@ -44,12 +44,6 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     RejPosition <- c()
     SurvPosition <- 1:nrow(data)
     counter <- 0
-    sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data))), 
-        verbose = FALSE)), silent = TRUE)
-    if ("try-error" %in% class(sigma)) {
-        cat(paste0("Error in destiny::optimal.sigma !!\n"))
-        break
-    }
     while (length(SurvPosition) > dropout) {
         if (verbose) {
             counter <- counter + 1

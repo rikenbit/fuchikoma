@@ -147,7 +147,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
 function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
     "Mix"), Comp = NULL, label = FALSE, cat.type = c("simple", 
     "one_vs_rest", "each", "two"), destiny = FALSE, kernel = vanilladot(), 
-    n.eigs = 10) 
+    n.eigs = 10, sigma = 60) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
@@ -167,12 +167,6 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     on.exit(stopImplicitCluster())
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
         label = label, cat.type = cat.type, n.eigs = n.eigs)
-    sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data))), 
-        verbose = FALSE)), silent = TRUE)
-    if ("try-error" %in% class(sigma)) {
-        cat(paste0("Error in destiny::optimal.sigma !!\n"))
-        break
-    }
     if (destiny) {
         HSICs <- foreach(j = 1:nrow(data), .export = c("SurvPosition", 
             ".custom.DiffusionMap", "n.eigs", "HSIC", "data", 
@@ -267,7 +261,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
 function (x, type = c("destiny", "matlab")) 
 {
     if (type == "destiny") {
-        sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(data))), 
+        sigma = try(destiny::optimal.sigma(find.sigmas(as.ExpressionSet(as.data.frame(t(x))), 
             verbose = FALSE)), silent = TRUE)
         if ("try-error" %in% class(sigma)) {
             cat(paste0("Error in destiny::optimal.sigma !!\n"))
@@ -275,13 +269,14 @@ function (x, type = c("destiny", "matlab"))
         }
     }
     else if (type == "matlab") {
-        size1 <- nrow(data)
+        x <- t(x)
+        size1 <- nrow(x)
         if (size1 > 100) {
-            Xmed <- data[1:100, ]
+            Xmed <- x[1:100, ]
             size1 <- 100
         }
         else {
-            Xmed <- data
+            Xmed <- x
         }
         G <- apply(Xmed^2, 1, sum)
         Q <- as.matrix(replicate(size1, G))

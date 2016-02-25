@@ -8,6 +8,20 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.19
+------------------------
+   o common sigma value is used in fuchikoma
+
+VERSION 0.0.18
+------------------------
+   o Debug of simulateDropoutCounts
+   o Debug of HSIC
+   o common sigma is used in each BAHSIC step of fuchikoma function
+
+VERSION 0.0.17
+------------------------
+   o The column name of output matrix of simulateDropoutCounts is set as Group*_rep*
+
 VERSION 0.0.16
 ------------------------
    o "Mix" mode is added in fuchikoma function
