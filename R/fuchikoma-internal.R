@@ -117,8 +117,9 @@ function (K, L, H, N, HSIC)
 }
 .uni.fuchikoma <-
 function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
-    Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", 
-        "each", "two"), kernel = vanilladot(), n.eigs = 10) 
+    weight = c(0.5, 0.5), Comp = NULL, label = FALSE, cat.type = c("simple", 
+        "one_vs_rest", "each", "two"), kernel = vanilladot(), 
+    n.eigs = 10) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
@@ -130,7 +131,8 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
         warning("Inappropriate n.eigs parameter!")
     }
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
-        label = label, cat.type = cat.type, n.eigs = n.eigs)
+        label = label, cat.type = cat.type, n.eigs = n.eigs, 
+        sigma = sigma)
     HSICs <- apply(data, 1, function(x) {
         HSIC(kernelMatrix(kernel, t(t(x))), L)
     })
@@ -145,9 +147,9 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
 }
 .omitone.fuchikoma <-
 function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
-    "Mix"), Comp = NULL, label = FALSE, cat.type = c("simple", 
-    "one_vs_rest", "each", "two"), destiny = FALSE, kernel = vanilladot(), 
-    n.eigs = 10, sigma = 60) 
+    "Mix"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
+    cat.type = c("simple", "one_vs_rest", "each", "two"), destiny = FALSE, 
+    kernel = vanilladot(), n.eigs = 10, sigma = 60) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
@@ -166,7 +168,8 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     }
     on.exit(stopImplicitCluster())
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
-        label = label, cat.type = cat.type, n.eigs = n.eigs)
+        label = label, cat.type = cat.type, n.eigs = n.eigs, 
+        sigma = sigma)
     if (destiny) {
         HSICs <- foreach(j = 1:nrow(data), .export = c("SurvPosition", 
             ".custom.DiffusionMap", "n.eigs", "HSIC", "data", 
@@ -200,8 +203,8 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
 }
 .Lmatrix <-
 function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
-    weight = weight, Comp = NULL, label = FALSE, cat.type = c("simple", 
-        "one_vs_rest", "each", "two"), n.eigs = 10) 
+    weight = c(0.5, 0.5), Comp = NULL, label = FALSE, cat.type = c("simple", 
+        "one_vs_rest", "each", "two"), n.eigs = 10, sigma = 15) 
 {
     if ((mode == "Supervised") && (is.vector(label))) {
         L <- CatKernel(label, type = cat.type)
@@ -209,7 +212,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
     else if (mode == "Unsupervised") {
         if (is.vector(Comp)) {
             DCs_Vals <- .custom.DiffusionMap(as.ExpressionSet(as.data.frame(t(data))), 
-                n.eigs = n.eigs)
+                n.eigs = n.eigs, sigma = sigma)
             DCs <- DCs_Vals$eigenvectors[, Comp]
             EigenVals <- DCs_Vals$eigenvalues[Comp]
             if (length(Comp) == 1) {

@@ -38,7 +38,8 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     }
     on.exit(stopImplicitCluster())
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
-        label = label, cat.type = cat.type, n.eigs = n.eigs)
+        label = label, cat.type = cat.type, n.eigs = n.eigs, 
+        sigma = sigma)
     HSICs <- 0
     All.pval <- 0
     RejPosition <- c()
