@@ -119,7 +119,7 @@ function (K, L, H, N, HSIC)
 function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
     weight = c(0.5, 0.5), Comp = NULL, label = FALSE, cat.type = c("simple", 
         "one_vs_rest", "each", "two"), kernel = vanilladot(), 
-    n.eigs = 10) 
+    n.eigs = 10, sigma = 15) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
@@ -149,7 +149,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
 function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
     "Mix"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), destiny = FALSE, 
-    kernel = vanilladot(), n.eigs = 10, sigma = 60) 
+    kernel = vanilladot(), n.eigs = 10, sigma = 15) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
