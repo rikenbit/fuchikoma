@@ -36,10 +36,16 @@ function (K, L, shrink = FALSE, type = c("gamma", "permutation"),
         B <- (Kc * Lc)^2
         (var_HSIC <- 2 * (N - 4) * (N - 5)/(N * (N - 1) * (N - 
             2) * (N - 3)) * sum(B - diag(diag(B))))
-        Alpha <- E_HSIC^2/var_HSIC
-        Beta <- N * var_HSIC/E_HSIC
-        x <- N * hsic.value
-        p_HSIC <- pgamma(x, shape = Alpha, scale = Beta, lower.tail = FALSE)
+        if ((E_HSIC > 0) && (var_HSIC > 0)) {
+            Alpha <- E_HSIC^2/var_HSIC
+            Beta <- N * var_HSIC/E_HSIC
+            x <- N * hsic.value
+            p_HSIC <- pgamma(x, shape = Alpha, scale = Beta, 
+                lower.tail = FALSE)
+        }
+        else {
+            p_HSIC <- 1
+        }
     }
     else if (type == "permutation") {
         registerDoParallel(detectCores())
