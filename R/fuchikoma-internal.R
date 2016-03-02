@@ -118,7 +118,7 @@ function (K, L, H, N, HSIC)
 .uni.fuchikoma <-
 function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
     weight = c(0.5, 0.5), Comp = NULL, label = FALSE, cat.type = c("simple", 
-        "one_vs_rest", "each", "two"), kernel = vanilladot(), 
+        "one_vs_rest", "each", "two"), kernelfunc = vanilladot(), 
     n.eigs = 10, sigma = 15) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
@@ -134,7 +134,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
         label = label, cat.type = cat.type, n.eigs = n.eigs, 
         sigma = sigma)
     HSICs <- apply(data, 1, function(x) {
-        HSIC(kernelMatrix(kernel, t(t(x))), L)
+        HSIC(kernelMatrix(kernelfunc, t(t(x))), L)
     })
     order.HSIC <- order(sapply(HSICs, function(x) {
         x$HSIC
@@ -149,7 +149,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
 function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
     "Mix"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), destiny = FALSE, 
-    kernel = vanilladot(), n.eigs = 10, sigma = 15) 
+    kernelfunc = vanilladot(), n.eigs = 10, sigma = 15) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
@@ -192,7 +192,7 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     }
     else {
         HSICs <- sapply(1:nrow(data), function(x) {
-            HSIC(kernelMatrix(kernel, t(data[setdiff(1:nrow(data), 
+            HSIC(kernelMatrix(kernelfunc, t(data[setdiff(1:nrow(data), 
                 x), ])), L)
         })
     }

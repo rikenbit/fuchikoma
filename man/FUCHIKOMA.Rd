@@ -8,7 +8,7 @@
 \packageDESCRIPTION{fuchikoma}
 }
 \usage{
-fuchikoma(data, cores=NULL, mode = c("Supervised", "Unsupervised", "Mix"), weight=c(0.5,0.5), Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, verbose=FALSE, dropout=10, sigma=60)
+fuchikoma(data, cores=NULL, mode = c("Supervised", "Unsupervised", "Mix"), weight=c(0.5,0.5), Comp = NULL, label = FALSE, cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, verbose=FALSE, dropout=10, sigma=15)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,7 +27,7 @@ fuchikoma(data, cores=NULL, mode = c("Supervised", "Unsupervised", "Mix"), weigh
 }
 \item{verbose}{verbose option (default: FALSE).}
 \item{dropout}{Threshold when the remaining gene is few (default: 10).}
-\item{sigma}{Parameter used in DiffusionMap of destiny (default: 60).}
+\item{sigma}{Parameter used in DiffusionMap of destiny (default: 15).}
 }
 \value{
 \item{DEGs.HSICs}{Differentially expressed genes (DEGs) and HSIC values}
