@@ -8,6 +8,12 @@ VERSION 0.99.0
 ------------------------
    o Commited to the Bioconductor
 
+VERSION 0.0.20
+------------------------
+   o default sigma value is commonly set as 15
+   o Debug of .Lmatrix
+   o Debug of HSIC when the type is set as "permutation"
+
 VERSION 0.0.19
 ------------------------
    o common sigma value is used in fuchikoma
