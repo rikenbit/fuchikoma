@@ -55,7 +55,7 @@ function (K, L, shrink = FALSE, type = c("gamma", "permutation"),
                     hsic.value.rand)
                 }
                 if (hsic.value.rand < 0) {
-                  list(HSIC = 0, Pval = 1)
+                  0
                 }
                 else {
                   hsic.value.rand

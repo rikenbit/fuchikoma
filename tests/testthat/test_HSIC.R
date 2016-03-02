@@ -1,5 +1,7 @@
-K <- matrix(runif(100), nrow=10)
-L <- matrix(runif(100), nrow=10)
+K <- matrix(runif(10), nrow=10, ncol=1)
+L <- matrix(runif(10), nrow=10, ncol=1)
+K <- K %*% t(K)
+L <- L %*% t(L)
 
 res1 <- HSIC(K, L)
 res2 <- HSIC(K, L, type="permutation")
