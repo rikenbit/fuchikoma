@@ -294,3 +294,36 @@ function (x, type = c("destiny", "matlab"))
     }
     sigma
 }
+.GenerateFC <-
+function (x, thr) 
+{
+    if (thr == "All") {
+        a <- 0.2416775
+        b <- 0.5479849
+    }
+    else if (thr == "E5") {
+        a <- 0.8918286
+        b <- -0.4247464
+    }
+    else if (thr == "E10") {
+        a <- 1.323898
+        b <- -0.6715766
+    }
+    else if (thr == "E50") {
+        a <- 2.383397
+        b <- -0.8402218
+    }
+    else if (thr == "E100") {
+        a <- 2.283208
+        b <- -0.6581984
+    }
+    else if (thr == "E300") {
+        a <- 1.478334
+        b <- -0.09964367
+    }
+    else if (is.numeric(thr)) {
+        a <- log10(thr)
+        b <- 0
+    }
+    10^(a * log10(x + 1)^b)
+}

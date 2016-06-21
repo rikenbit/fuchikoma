@@ -9,7 +9,9 @@ VERSION 0.99.0
    o Commited to the Bioconductor
 
 
-
+VERSION 0.0.21
+------------------------
+   o Parameter of DEG.foldchange (e.g., 4, 4) is changed to DEG.thr (e.g., E5, E5) in simulateDropoutCounts
 
 VERSION 0.0.20
 ------------------------

@@ -13,5 +13,6 @@ export(
 	.uni.fuchikoma,
 	.omitone.fuchikoma,
 	.Lmatrix,
-	.estimate.sigma
+	.estimate.sigma,
+	.GenerateFC
 )

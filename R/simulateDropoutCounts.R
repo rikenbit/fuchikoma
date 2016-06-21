@@ -1,6 +1,6 @@
 simulateDropoutCounts <-
 function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.2, DEG.assign = c(0.5, 
-    0.5), DEG.foldchange = c(4, 4), replicates = c(3, 3), Lambda = 0.1) 
+    0.5), DEG.thr = c("E5", "E5"), replicates = c(3, 3), Lambda = 0.1) 
 {
     if (!is.numeric(Ngene)) {
         warning("Please specify the Ngene as numeric!")
@@ -11,8 +11,8 @@ function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.2, DEG.assign = c(0.5,
     if (sum(DEG.assign) != 1) {
         warning("Please specify the DEG.assign as vector(sum(DEG.assign) is 1)!")
     }
-    if ((length(DEG.assign) != length(DEG.foldchange))) {
-        warning("Please specify the DEG.assign and DEG.foldchange are the same length!")
+    if ((length(DEG.assign) != length(DEG.thr))) {
+        warning("Please specify the DEG.assign and DEG.thr are the same length!")
     }
     if (!is.numeric(Lambda)) {
         warning("Please specify the Lambda as numeric!")
@@ -35,15 +35,16 @@ function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.2, DEG.assign = c(0.5,
             else {
                 row.index <- sum(No.DEG[1:(i - 1)]) + 1:sum(No.DEG[i])
             }
-            design.matrix[row.index, i] <- DEG.foldchange[i]
+            design.matrix[row.index, i] <- .GenerateFC(mu[rn.index][row.index], 
+                DEG.thr[i])
         }
         for (i in 1:length(replicates)) {
             deg.index <- which(design.matrix[, i] != 1)
             col.index <- sum(replicates[1:i - 1]) + 1:sum(replicates[i])
-            original.matrix[deg.index, col.index] <- t(sapply(rn.index[deg.index], 
+            original.matrix[deg.index, col.index] <- t(sapply(deg.index, 
                 function(x) {
-                  rnbinom(n = replicates[i], mu = DEG.foldchange[i] * 
-                    mu[x], size = 1/Disp[x])
+                  rnbinom(n = replicates[i], mu = design.matrix[x, 
+                    i] * mu[rn.index[x]], size = 1/Disp[rn.index[x]])
                 }))
         }
     }
