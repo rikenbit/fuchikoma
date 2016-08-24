@@ -1,5 +1,5 @@
 simulateDropoutCounts <-
-function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.2, DEG.assign = c(0.5, 
+function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.02, DEG.assign = c(0.5, 
     0.5), DEG.thr = c("E5", "E5"), replicates = c(3, 3), Lambda = 0.1) 
 {
     if (!is.numeric(Ngene)) {
