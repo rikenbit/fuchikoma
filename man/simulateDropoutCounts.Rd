@@ -14,7 +14,7 @@ simulateDropoutCounts(Ngene = 10000, makeDEG=TRUE, PDEG = 0.2, DEG.assign = c(0.
   \item{makeDEG}{Whether make DEG or not (defalult:TRUE)}
   \item{PDEG}{Percentage of DEG (defalult:0.2)}
   \item{DEG.assign}{Ratio of DEG in each cluster (defalult:c(0.5, 0.5))}
-  \item{DEG.thr}{Fold change  in each cluster (defalult:c("E5", "E5"))}
+  \item{DEG.thr}{Fold change in each cluster (defalult:c("E5", "E5"))}
   \item{replicates}{No of repeated measurement in each cluster (defalult:c(3, 3))}
   \item{Lambda}{(defalult:0.1)}
  }

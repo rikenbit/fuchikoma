@@ -297,33 +297,28 @@ function (x, type = c("destiny", "matlab"))
 .GenerateFC <-
 function (x, thr) 
 {
-    if (thr == "All") {
-        a <- 0.2416775
-        b <- 0.5479849
+    if (thr == "E2") {
+        a <- 0.770969
+        b <- 0.1966233
     }
     else if (thr == "E5") {
-        a <- 0.8918286
-        b <- -0.4247464
+        a <- 1.5557753
+        b <- 0.3990444
     }
     else if (thr == "E10") {
-        a <- 1.323898
-        b <- -0.6715766
+        a <- 2.8152928
+        b <- 0.5580497
     }
     else if (thr == "E50") {
-        a <- 2.383397
-        b <- -0.8402218
+        a <- 13.6517122
+        b <- 0.9374746
     }
     else if (thr == "E100") {
-        a <- 2.283208
-        b <- -0.6581984
-    }
-    else if (thr == "E300") {
-        a <- 1.478334
-        b <- -0.09964367
+        a <- 30.733509
+        b <- 1.131347
     }
     else if (is.numeric(thr)) {
-        a <- log10(thr)
-        b <- 0
+        stop("Wrong thr!!!")
     }
-    10^(a * log10(x + 1)^b)
+    10^(a * exp(-b * log10(x + 1)))
 }
