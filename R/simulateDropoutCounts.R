@@ -1,6 +1,6 @@
 simulateDropoutCounts <-
 function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.02, DEG.assign = c(0.5, 
-    0.5), DEG.thr = c("E5", "E5"), replicates = c(3, 3), Lambda = 0.1) 
+    0.5), DEG.thr = c("E1", "E1"), replicates = c(48, 48), Lambda = 1) 
 {
     if (!is.numeric(Ngene)) {
         warning("Please specify the Ngene as numeric!")
@@ -18,6 +18,7 @@ function (Ngene = 10000, makeDEG = TRUE, PDEG = 0.02, DEG.assign = c(0.5,
         warning("Please specify the Lambda as numeric!")
     }
     data(Marioni)
+    Marioni <- Marioni[, 6:10]
     mu <- apply(Marioni, 1, mean)
     v <- apply(Marioni, 1, var)
     Disp <- (v - mu)/mu^2

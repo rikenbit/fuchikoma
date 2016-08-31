@@ -7,7 +7,7 @@
 This function generates simulation data with arbitrary defined experimental condition.
 }
 \usage{
-simulateDropoutCounts(Ngene = 10000, makeDEG=TRUE, PDEG = 0.02, DEG.assign = c(0.5, 0.5), DEG.thr = c("E5", "E5"), replicates = c(3, 3), Lambda = 0.1)
+simulateDropoutCounts(Ngene = 10000, makeDEG=TRUE, PDEG = 0.02, DEG.assign = c(0.5, 0.5), DEG.thr = c("E1", "E1"), replicates = c(48, 48), Lambda = 1)
 }
 \arguments{
   \item{Ngene}{No. of gene (defalult:10000)}
@@ -32,6 +32,6 @@ Maintainer: \packageMaintainer{fuchikoma}
 }
 
 \examples{
-res1 <- simulateDropoutCounts(Ngene = 10000, replicates = c(3, 3), PDEG = 0.1, DEG.assign = c(0.5, 0.5), DEG.thr = c("E5", "E5"), Lambda = 0.1)
+res1 <- simulateDropoutCounts()
 str(res1)
 }
