@@ -259,7 +259,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix",
         L <- weight[1] * L1 + weight[2] * L2
     }
     else if (mode == "tSNE") {
-        Dim <- Rtsne(data, dims = 2, perplexity)$Y
+        Dim <- Rtsne(data, dims = 2, perplexity = perplexity)$Y
         L <- Dim %*% t(Dim)
     }
     else {
