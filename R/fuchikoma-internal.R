@@ -119,7 +119,7 @@ function (K, L, H, N, HSIC)
 function (data, mode = c("Supervised", "Unsupervised", "Mix", 
     "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), kernelfunc = vanilladot(), 
-    n.eigs = 10, sigma = 15) 
+    n.eigs = 10, sigma = 15, perplexity = 30) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix", 
         "tSNE"))
@@ -133,7 +133,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix",
     }
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
         label = label, cat.type = cat.type, n.eigs = n.eigs, 
-        sigma = sigma)
+        sigma = sigma, perplexity = perplexity)
     HSICs <- apply(data, 1, function(x) {
         HSIC(kernelMatrix(kernelfunc, t(t(x))), L)
     })
@@ -150,7 +150,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix",
 function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
     "Mix", "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), destiny = FALSE, 
-    kernelfunc = vanilladot(), n.eigs = 10, sigma = 15) 
+    kernelfunc = vanilladot(), n.eigs = 10, sigma = 15, perplexity = 30) 
 {
     mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix", 
         "tSNE"))
@@ -171,7 +171,7 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     on.exit(stopImplicitCluster())
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
         label = label, cat.type = cat.type, n.eigs = n.eigs, 
-        sigma = sigma)
+        sigma = sigma, perplexity = perplexity)
     if (destiny) {
         HSICs <- foreach(j = 1:nrow(data), .export = c("SurvPosition", 
             ".custom.DiffusionMap", "n.eigs", "HSIC", "data", 
@@ -207,7 +207,7 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
 function (data, mode = c("Supervised", "Unsupervised", "Mix", 
     "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, 
-    sigma = 15) 
+    sigma = 15, perplexity = 30) 
 {
     if ((mode == "Supervised") && (is.vector(label))) {
         L <- CatKernel(label, type = cat.type)
@@ -259,7 +259,7 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix",
         L <- weight[1] * L1 + weight[2] * L2
     }
     else if (mode == "tSNE") {
-        Dim <- Rtsne(data, dims = 2)$Y
+        Dim <- Rtsne(data, dims = 2, perplexity)$Y
         L <- Dim %*% t(Dim)
     }
     else {

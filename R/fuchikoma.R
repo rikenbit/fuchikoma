@@ -3,7 +3,7 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     "Mix", "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, 
     algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, 
-    verbose = FALSE, dropout = 10, sigma = 15) 
+    verbose = FALSE, dropout = 10, sigma = 15, perplexity = 30) 
 {
     if (!is.null(cores) && (cores < 1)) {
         warning("Inappropriate cores parameter!")
@@ -40,7 +40,7 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     on.exit(stopImplicitCluster())
     L <- .Lmatrix(data, mode = mode, weight = weight, Comp = Comp, 
         label = label, cat.type = cat.type, n.eigs = n.eigs, 
-        sigma = sigma)
+        sigma = sigma, perplexity = perplexity)
     HSICs <- 0
     All.pval <- 0
     RejPosition <- c()
