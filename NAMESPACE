@@ -4,6 +4,7 @@ import(doParallel)
 import(FNN)
 import(Matrix)
 import(kernlab)
+import(Rtsne)
 
 export(
 	CatKernel,

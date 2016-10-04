@@ -116,12 +116,13 @@ function (K, L, H, N, HSIC)
     (1 - (KL - HSIC)/((N - 2) * HSIC + KL/N)^2) * HSIC
 }
 .uni.fuchikoma <-
-function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
-    weight = c(0.5, 0.5), Comp = NULL, label = FALSE, cat.type = c("simple", 
-        "one_vs_rest", "each", "two"), kernelfunc = vanilladot(), 
+function (data, mode = c("Supervised", "Unsupervised", "Mix", 
+    "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
+    cat.type = c("simple", "one_vs_rest", "each", "two"), kernelfunc = vanilladot(), 
     n.eigs = 10, sigma = 15) 
 {
-    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
+    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix", 
+        "tSNE"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
         warning("Inappropriate Comp parameter!")
     }
@@ -147,11 +148,12 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
 }
 .omitone.fuchikoma <-
 function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
-    "Mix"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
+    "Mix", "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), destiny = FALSE, 
     kernelfunc = vanilladot(), n.eigs = 10, sigma = 15) 
 {
-    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
+    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix", 
+        "tSNE"))
     if (!is.null(Comp) && (Comp > n.eigs)) {
         warning("Inappropriate Comp parameter!")
     }
@@ -202,9 +204,10 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
         ]))
 }
 .Lmatrix <-
-function (data, mode = c("Supervised", "Unsupervised", "Mix"), 
-    weight = c(0.5, 0.5), Comp = NULL, label = FALSE, cat.type = c("simple", 
-        "one_vs_rest", "each", "two"), n.eigs = 10, sigma = 15) 
+function (data, mode = c("Supervised", "Unsupervised", "Mix", 
+    "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
+    cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, 
+    sigma = 15) 
 {
     if ((mode == "Supervised") && (is.vector(label))) {
         L <- CatKernel(label, type = cat.type)
@@ -254,6 +257,10 @@ function (data, mode = c("Supervised", "Unsupervised", "Mix"),
             warning("Specify Comp!")
         }
         L <- weight[1] * L1 + weight[2] * L2
+    }
+    else if (mode == "tSNE") {
+        Dim <- Rtsne(data, dims = 2)$Y
+        L <- Dim %*% t(Dim)
     }
     else {
         warning("Wrong mode!")

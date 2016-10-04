@@ -1,6 +1,6 @@
 fuchikoma <-
 function (data, cores = NULL, mode = c("Supervised", "Unsupervised", 
-    "Mix"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
+    "Mix", "tSNE"), weight = c(0.5, 0.5), Comp = NULL, label = FALSE, 
     cat.type = c("simple", "one_vs_rest", "each", "two"), n.eigs = 10, 
     algorithm = c("song", "brute"), per.rej = 10, threshold = 0.01, 
     verbose = FALSE, dropout = 10, sigma = 15) 
@@ -8,7 +8,8 @@ function (data, cores = NULL, mode = c("Supervised", "Unsupervised",
     if (!is.null(cores) && (cores < 1)) {
         warning("Inappropriate cores parameter!")
     }
-    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix"))
+    mode <- match.arg(mode, c("Supervised", "Unsupervised", "Mix", 
+        "tSNE"))
     if (sum(weight) != 1) {
         warning("Sum of weight must be 1!")
     }

@@ -1,11 +1,11 @@
 Package: fuchikoma
 Type: Package
 Title: Revealing differentially expressed genes using nonlinear dimensionality reduction for single cell RNA-Seq data
-Version: 0.0.23
-Date: 2016-6-21
+Version: 0.0.24
+Date: 2016-10-4
 Author: Koki Tsuyuzaki, Haruka Ozaki, Mika Yoshimura, Itoshi Nikaido
 Maintainer: Koki Tsuyuzaki <k.t.the-answer@hotmail.co.jp>
-Depends: R (>= 2.5.0), destiny, doParallel, foreach, FNN, Matrix, kernlab
+Depends: R (>= 2.5.0), destiny, doParallel, foreach, FNN, Matrix, kernlab, Rtsne
 Suggests: BiocStyle, testthat
 biocViews: Bioinformatics, DifferentialExpression, Clustering, MultipleComparisons, RNAseq, HighThroughputSequencing, Sequencing, Software
 Description: fuchikoma detects differentially expressed genes (DEGs) in one of multiple clusters. To detect DEGs, fuchikoma has two calculation mode; "supervised-mode" and "unsupervised-mode". In supervised-mode, fuchikoma detects DEGs by using a label vector, in which the cluster of each sample or cell is written. In unsupervised-mode, fuchikoma detects DEGs without the label vector. In this mode, user run the diffusion map, and specify which diffusion components contribute to the difference of such cluster.
